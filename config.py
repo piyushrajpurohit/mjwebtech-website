@@ -12,6 +12,17 @@ load_dotenv()
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
+def _database_url():
+    """Return a SQLAlchemy-compatible database URL.
+
+    Render may inject postgres://; SQLAlchemy 1.4+ requires postgresql://.
+    """
+    url = os.environ.get("DATABASE_URL", "")
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://"):]
+    return url
+
+
 class Config:
     """Base configuration — inherited by all environments."""
     
@@ -22,8 +33,7 @@ class Config:
     # ── Database Configuration ──
     # LOCAL: SQLite (development only)
     # PRODUCTION: PostgreSQL via DATABASE_URL env var
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "DATABASE_URL",
+    SQLALCHEMY_DATABASE_URI = _database_url() or (
         f"sqlite:///{os.path.join(BASE_DIR, 'instance', 'mjwebtech.db')}"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -53,8 +63,8 @@ class Config:
     MAIL_USE_TLS  = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
-    MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "noreply@mjwebtech.com")
-    CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "info@mjwebtech.com")
+    MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "noreply@mjwebtech.in")
+    CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "info@mjwebtech.in")
     
     # ── CAPTCHA Configuration ──
     TURNSTILE_SITE_KEY = os.environ.get("TURNSTILE_SITE_KEY", "")
@@ -62,7 +72,7 @@ class Config:
 
     # ── Company Information ──
     COMPANY_NAME    = "MJ WebTech Pvt. Ltd."
-    COMPANY_EMAIL   = "info@mjwebtech.com"
+    COMPANY_EMAIL   = "info@mjwebtech.in"
     COMPANY_PHONE   = "+91-98765-43210"
     COMPANY_ADDRESS = "109, Adarsh Nagar, Near Bajaj Agency, Mahadeva Road, Siwan, Bihar - 841227"
     GOOGLE_MAPS_EMBED = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3597.9!2d84.3627!3d26.2391!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3992fd53f4e3b965:0x21c5230d6e5bfaec!2s109,+Adarsh+Nagar,+Mahadeva+Road,+Siwan,+Bihar+841227!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
@@ -99,13 +109,16 @@ class ProductionConfig(Config):
     )
     
     # ── Database ──
-    # MUST use PostgreSQL in production (via DATABASE_URL)
-    # SQLite is single-process, not suitable for production
-    if not os.environ.get("DATABASE_URL", "").startswith("postgresql://"):
-        raise ValueError(
-            "⚠️  PRODUCTION: DATABASE_URL must start with postgresql:// "
-            "SQLite is not supported in production environments."
-        )
+    # MUST use PostgreSQL in production (via DATABASE_URL).
+    # Accept postgres:// from Render and the canonical postgresql:// form.
+    # Only enforce this when actually running in production so config import
+    # does not fail during local/dev or static export.
+    if os.environ.get("FLASK_ENV") == "production":
+        if not (Config.SQLALCHEMY_DATABASE_URI or "").startswith("postgresql://"):
+            raise ValueError(
+                "PRODUCTION: DATABASE_URL must be a PostgreSQL URL "
+                "(postgresql:// or postgres://). SQLite is not supported."
+            )
 
 
 class TestingConfig(Config):
