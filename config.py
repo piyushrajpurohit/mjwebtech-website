@@ -107,6 +107,10 @@ class Config:
     TURNSTILE_SITE_KEY = os.environ.get("TURNSTILE_SITE_KEY", "")
     TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY", "")
 
+    # Public frontend API origin. Empty = same-origin (local Flask).
+    # Netlify static export sets this to the Render backend URL.
+    API_BASE_URL = os.environ.get("API_BASE_URL", "").rstrip("/")
+
     # ── Company Information ──
     COMPANY_NAME    = "MJ WebTech Pvt. Ltd."
     COMPANY_EMAIL   = "info@mjwebtech.in"
@@ -138,12 +142,9 @@ class ProductionConfig(Config):
     REMEMBER_COOKIE_SECURE  = True      # HTTPS only
     
     # ── CORS Configuration ──
-    # Production frontend domain(s) — must be set via environment variable
-    # Example: https://my-domain.com,https://www.my-domain.com
-    CORS_ORIGINS = os.environ.get(
-        "CORS_ORIGINS",
-        "https://my-domain.com"  # Fallback — should be overridden in production
-    )
+    # Must be set via CORS_ORIGINS in the Render dashboard.
+    # Comma-separated production frontend origins only. No placeholder domain.
+    CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "")
     
     # ── Database ──
     # MUST use PostgreSQL in production (via DATABASE_URL).

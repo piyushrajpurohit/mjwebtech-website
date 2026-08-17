@@ -217,7 +217,7 @@ let otpTimerInterval = null;
 
     setButtonLoading(sendOtpBtn, true, 'Sending...');
 
-    fetch('/contact/send-otp', {
+    fetch(window.mjApiUrl('/api/contact/send-otp'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email })
@@ -251,7 +251,7 @@ let otpTimerInterval = null;
 
     setButtonLoading(verifyOtpBtn, true, 'Verifying...');
 
-    fetch('/contact/verify-otp', {
+    fetch(window.mjApiUrl('/api/contact/verify-otp'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, otp: otp })
@@ -282,7 +282,7 @@ let otpTimerInterval = null;
 
     setButtonLoading(resendOtpBtn, true, 'Resending...');
 
-    fetch('/contact/send-otp', {
+    fetch(window.mjApiUrl('/api/contact/send-otp'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email })
@@ -331,7 +331,50 @@ let otpTimerInterval = null;
     if (!emailVerified) {
       e.preventDefault();
       alert('Please verify your email with OTP before sending.');
+      return;
     }
+
+    // Static Netlify pages cannot POST Flask-WTF to Render (CSRF mismatch).
+    // When an API base is set, submit JSON to the existing /api/contact endpoint.
+    if (!window.MJ_API_BASE) {
+      return;
+    }
+
+    e.preventDefault();
+    const submitBtn = document.getElementById('contactSubmitBtn');
+    const turnstileInput = form.querySelector('[name="cf-turnstile-response"]');
+    const payload = {
+      name: form.querySelector('[name="name"]')?.value.trim(),
+      email: form.querySelector('[name="email"]')?.value.trim(),
+      company: form.querySelector('[name="company"]')?.value.trim(),
+      phone: form.querySelector('[name="phone"]')?.value.trim(),
+      subject: form.querySelector('[name="subject"]')?.value.trim(),
+      message: form.querySelector('[name="message"]')?.value.trim(),
+      turnstile_token: turnstileInput ? turnstileInput.value : '',
+    };
+
+    setButtonLoading(submitBtn, true, 'Sending...');
+    fetch(window.mjApiUrl('/api/contact'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(response => response.json().then(data => ({ ok: response.ok, data })))
+      .then(({ ok, data }) => {
+        if (ok && data.success) {
+          alert(data.message || 'Your message has been received.');
+          form.reset();
+          emailVerified = false;
+          window.location.reload();
+        } else {
+          alert(data.message || 'Unable to send your message. Please try again.');
+          setButtonLoading(submitBtn, false, '<i class="bi bi-send me-2"></i>Send Message');
+        }
+      })
+      .catch(() => {
+        alert('An error occurred. Please try again.');
+        setButtonLoading(submitBtn, false, '<i class="bi bi-send me-2"></i>Send Message');
+      });
   });
 })();
 </script>

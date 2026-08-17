@@ -5,6 +5,14 @@
  */
 'use strict';
 
+window.mjApiUrl = function (path) {
+  var base = (window.MJ_API_BASE || '').replace(/\/$/, '');
+  if (path.charAt(0) !== '/') {
+    path = '/' + path;
+  }
+  return base + path;
+};
+
 (function () {
 
   /* ── AOS ── */

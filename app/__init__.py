@@ -78,6 +78,7 @@ def create_app(env: str = None) -> Flask:
             "current_year":    datetime.utcnow().year,
             "is_authenticated": bool(user),
             "is_admin": bool(user and user.is_admin),
+            "api_base_url": app.config.get("API_BASE_URL", "").rstrip("/"),
         }
 
     # ── Error handlers ──

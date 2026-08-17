@@ -191,7 +191,7 @@ let otpTimerInterval = null;
     sendOtpBtn.disabled = true;
     sendOtpBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
     
-    fetch('/api/careers/send-otp', {
+    fetch(window.mjApiUrl('/api/careers/send-otp'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email })
@@ -229,7 +229,7 @@ let otpTimerInterval = null;
     verifyOtpBtn.disabled = true;
     verifyOtpBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Verifying...';
     
-    fetch('/api/careers/verify-otp', {
+    fetch(window.mjApiUrl('/api/careers/verify-otp'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, otp: otp })
@@ -259,7 +259,7 @@ let otpTimerInterval = null;
   resendOtpBtn?.addEventListener('click', function() {
     const email = emailInput?.value.trim();
     
-    fetch('/api/careers/send-otp', {
+    fetch(window.mjApiUrl('/api/careers/send-otp'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email })

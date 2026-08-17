@@ -214,7 +214,7 @@ document.getElementById('sendOtpBtn').addEventListener('click', function() {
     this.disabled = true;
     this.textContent = 'Sending...';
     
-    fetch('/api/auth/send-otp', {
+    fetch(window.mjApiUrl('/api/auth/send-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email })
@@ -251,7 +251,7 @@ document.getElementById('verifyOtpBtn').addEventListener('click', function() {
     this.disabled = true;
     this.textContent = 'Verifying...';
     
-    fetch('/api/auth/verify-otp', {
+    fetch(window.mjApiUrl('/api/auth/verify-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email, otp: otp })
@@ -281,7 +281,7 @@ document.getElementById('verifyOtpBtn').addEventListener('click', function() {
 document.getElementById('resendOtpBtn').addEventListener('click', function() {
     const email = document.getElementById('email').value.trim();
     
-    fetch('/api/auth/resend-otp', {
+    fetch(window.mjApiUrl('/api/auth/resend-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email })
@@ -342,7 +342,7 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
     submitBtn.disabled = true;
     submitBtn.textContent = 'Creating account...';
 
-    fetch('/api/register', {
+    fetch(window.mjApiUrl('/api/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
