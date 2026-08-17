@@ -23,6 +23,53 @@ def _database_url():
     return url
 
 
+def _is_postgresql_uri(uri: str) -> bool:
+    return (
+        uri.startswith("postgres://")
+        or uri.startswith("postgresql://")
+        or uri.startswith("postgresql+")
+    )
+
+
+def _prepare_database_uri(url: str) -> str:
+    """Normalize the database URL for the installed driver (psycopg2-binary).
+
+    Connection timeout is applied as the libpq URI parameter connect_timeout,
+    not as SQLAlchemy connect_args. connect_args are forwarded as Python
+    keywords to the DBAPI Connection() constructor; sqlite3 and some
+    psycopg2 connection paths reject connect_timeout there.
+    """
+    if not url:
+        return f"sqlite:///{os.path.join(BASE_DIR, 'instance', 'mjwebtech.db')}"
+
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://"):]
+
+    if url.startswith("postgresql://"):
+        url = "postgresql+psycopg2://" + url[len("postgresql://"):]
+    elif not url.startswith("postgresql+psycopg2://"):
+        return url
+
+    if "connect_timeout=" not in url:
+        url += ("&" if "?" in url else "?") + "connect_timeout=10"
+    return url
+
+
+def _engine_options(uri: str) -> dict:
+    """Pool settings only. Driver-specific timeouts belong on the DSN."""
+    options = {
+        "pool_pre_ping": True,
+        "pool_recycle": 280,
+    }
+    if _is_postgresql_uri(uri):
+        options["pool_size"] = 10
+        options["max_overflow"] = 5
+    return options
+
+
+_SQLALCHEMY_DATABASE_URI = _prepare_database_uri(_database_url())
+
+
 class Config:
     """Base configuration — inherited by all environments."""
     
@@ -32,20 +79,10 @@ class Config:
 
     # ── Database Configuration ──
     # LOCAL: SQLite (development only)
-    # PRODUCTION: PostgreSQL via DATABASE_URL env var
-    SQLALCHEMY_DATABASE_URI = _database_url() or (
-        f"sqlite:///{os.path.join(BASE_DIR, 'instance', 'mjwebtech.db')}"
-    )
+    # PRODUCTION: PostgreSQL via DATABASE_URL env var (psycopg2)
+    SQLALCHEMY_DATABASE_URI = _SQLALCHEMY_DATABASE_URI
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    
-    # Connection pool settings optimized for production databases
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        "pool_recycle": 280,      # Recycle connections before timeout
-        "pool_pre_ping": True,    # Verify connections before use (critical for remote DB)
-        "pool_size": 10,          # Connection pool size for production
-        "max_overflow": 5,        # Overflow connections for peak load
-        "connect_args": {"connect_timeout": 10},
-    }
+    SQLALCHEMY_ENGINE_OPTIONS = _engine_options(_SQLALCHEMY_DATABASE_URI)
 
     # ── File Upload Settings ──
     UPLOAD_FOLDER = os.path.join(BASE_DIR, "app", "static", "uploads")
@@ -114,7 +151,7 @@ class ProductionConfig(Config):
     # Only enforce this when actually running in production so config import
     # does not fail during local/dev or static export.
     if os.environ.get("FLASK_ENV") == "production":
-        if not (Config.SQLALCHEMY_DATABASE_URI or "").startswith("postgresql://"):
+        if not _is_postgresql_uri(Config.SQLALCHEMY_DATABASE_URI or ""):
             raise ValueError(
                 "PRODUCTION: DATABASE_URL must be a PostgreSQL URL "
                 "(postgresql:// or postgres://). SQLite is not supported."
