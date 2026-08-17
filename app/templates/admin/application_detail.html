@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Application #{{ application.id }} — MJ WebTech{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero-sm">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <h1 class="page-hero-title">Application Detail</h1>
+        <p class="page-hero-sub">Review candidate details, update application status, and download the resume.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-pad">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="card p-4 mb-4">
+          <dl class="row">
+            <dt class="col-sm-4">ID</dt>
+            <dd class="col-sm-8">{{ application.id }}</dd>
+
+            <dt class="col-sm-4">Name</dt>
+            <dd class="col-sm-8">{{ application.full_name }}</dd>
+
+            <dt class="col-sm-4">Email</dt>
+            <dd class="col-sm-8">{{ application.email }}</dd>
+
+            <dt class="col-sm-4">Phone</dt>
+            <dd class="col-sm-8">{{ application.phone }}</dd>
+
+            <dt class="col-sm-4">Position</dt>
+            <dd class="col-sm-8">{{ application.position }}</dd>
+
+            <dt class="col-sm-4">Experience</dt>
+            <dd class="col-sm-8">{{ application.experience or 'Not specified' }}</dd>
+
+            <dt class="col-sm-4">Submitted</dt>
+            <dd class="col-sm-8">{{ application.created_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+
+            <dt class="col-sm-4">Status</dt>
+            <dd class="col-sm-8">{{ application.status.title() }}</dd>
+          </dl>
+
+          <div class="mt-4">
+            <h3>Cover Letter</h3>
+            <p class="bg-dark p-3 rounded">{{ application.cover_letter or 'No cover letter provided.' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card p-4 mb-4">
+          <h3 class="mb-3">Application Actions</h3>
+          <form method="POST" action="{{ url_for('admin.update_application_status', application_id=application.id) }}">
+            <div class="mb-3">
+              <label class="form-label">Status</label>
+              <select name="status" class="form-select">
+                {% for option in status_choices %}
+                <option value="{{ option }}" {% if application.status == option %}selected{% endif %}>{{ option.title() }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="btn btn-mj-primary w-100">Update status</button>
+          </form>
+
+          <a href="{{ url_for('admin.download_application_resume', application_id=application.id) }}" class="btn btn-outline-light w-100 mt-3">
+            <i class="bi bi-download me-1"></i>Download Resume
+          </a>
+        </div>
+
+        <div class="card p-4">
+          <a href="{{ url_for('admin.applications_list') }}" class="btn btn-outline-light w-100">Back to applications</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

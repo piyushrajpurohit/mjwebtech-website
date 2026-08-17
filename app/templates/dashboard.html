@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — MJ WebTech{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero-sm">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <h1 class="page-hero-title">Your Dashboard</h1>
+        <p class="page-hero-sub">Welcome back! This section is protected and only visible to authenticated users.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-pad">
+  <div class="container">
+    <div class="card p-5 bg-mj-dark border border-secondary">
+      <h2 class="section-title">Account Access</h2>
+      <p class="text-secondary">You are currently logged in and can access protected endpoints such as your profile, logout, and secured API actions.</p>
+      <ul class="text-secondary">
+        <li>Use <code>/api/profile</code> to fetch user details.</li>
+        <li>Use <code>/api/logout</code> to end your session.</li>
+        <li>Use protected POST endpoints only after login.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+{% endblock %}

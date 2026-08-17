@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}IT Services — MJ WebTech Pvt. Ltd.{% endblock %}
+{% block meta_desc %}Explore MJ WebTech's IT services: software development, cloud, consulting, technical support, digital marketing and manpower supply across India.{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="container text-center" data-aos="fade-up">
+    <div class="section-badge">What We Offer</div>
+    <h1 class="page-hero-title">Our <span class="text-mj-accent">Services</span></h1>
+    <p class="page-hero-sub">Eight specialised s covering every stage of your technology journey.</p>
+  </div>
+</section>
+
+<!-- Services Detail -->
+<section class="section-pad">
+  <div class="container">
+    {% for svc in services %}
+    <div class="service-detail-card" id="{{ svc.title | lower | replace(' ', '-') | replace('&', '') }}" data-aos="fade-up">
+      <div class="row align-items-stretch g-0">
+        <div class="col-lg-4 {% if loop.index is even %}order-lg-2{% endif %}">
+          <div class="svc-detail-visual svc-bg-{{ svc.color }} h-100">
+            <i class="bi {{ svc.icon }}"></i>
+            <h3>{{ svc.title }}</h3>
+            <p>{{ svc.short }}</p>
+          </div>
+        </div>
+        <div class="col-lg-8 {% if loop.index is even %}order-lg-1{% endif %}">
+          <div class="svc-detail-content h-100 d-flex flex-column justify-content-center">
+            <div class="section-badge">Service {{ loop.index }} of {{ services|length }}</div>
+            <h2 class="svc-detail-title">{{ svc.title }}</h2>
+            <p class="svc-detail-intro">{{ svc.short }}</p>
+            <ul class="svc-feature-list">
+              {% for detail in svc.details %}
+              <li><i class="bi bi-check-circle-fill text-mj-accent"></i>{{ detail }}</li>
+              {% endfor %}
+            </ul>
+            <div class="mt-4">
+              <a href="{{ url_for('contact.contact', subject=svc.title) }}#contact-form-section" class="btn btn-mj-primary px-4">
+                Enquire About This Service <i class="bi bi-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Process -->
+<section class="section-pad bg-mj-dark">
+  <div class="container">
+    <div class="section-header text-center mb-5" data-aos="fade-up">
+      <div class="section-badge">How We Work</div>
+      <h2 class="section-title">Our <span class="text-mj-accent">Process</span></h2>
+    </div>
+    <div class="row g-4 text-center">
+      {% for step, icon, title, desc in [
+        ('01','bi-chat-dots','Discover','We listen deeply to understand your business goals, pain points and technical constraints.'),
+        ('02','bi-lightbulb','Design','Our architects design a solution tailored to your needs — technology-agnostic, outcome-focused.'),
+        ('03','bi-gear-wide-connected','Develop','Agile sprints with bi-weekly demos keep you in the loop. Code reviews. CI/CD from day one.'),
+        ('04','bi-rocket-takeoff','Deploy','Rigorous UAT, security checks and smooth go-live with zero-downtime deployment strategies.'),
+        ('05','bi-headset','Support','Post-launch monitoring, SLA-backed support and continuous improvement through feedback loops.'),
+      ] %}
+      <div class="col-6 col-lg" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 80 }}">
+        <div class="process-step">
+          <div class="process-num">{{ step }}</div>
+          <div class="process-icon"><i class="bi {{ icon }}"></i></div>
+          <h6>{{ title }}</h6>
+          <p class="text-secondary small">{{ desc }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="cta-band" data-aos="fade-up">
+  <div class="container text-center">
+    <h2>Not Sure Which Service You Need?</h2>
+    <p>Talk to our consultants — free technology assessment, no obligation.</p>
+    <a href="{{ url_for('contact.contact', subject='Talk to an Expert') }}#contact-form-section" class="btn btn-light btn-lg px-5 mt-3 text-mj-dark fw-600">
+      <i class="bi bi-telephone me-2"></i>Talk to an Expert
+    </a>
+  </div>
+</section>
+{% endblock %}

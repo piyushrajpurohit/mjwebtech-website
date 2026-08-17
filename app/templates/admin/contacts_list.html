@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Contacts — MJ WebTech{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero-sm">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <h1 class="page-hero-title">Contact Inquiries</h1>
+        <p class="page-hero-sub">Manage customer inquiries from the website in a secure admin panel.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-pad">
+  <div class="container">
+    <div class="card p-4 mb-4">
+      <form method="GET" class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label">Search</label>
+          <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="Search by name, email, company or subject">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Status</label>
+          <select name="status" class="form-select">
+            <option value="">All statuses</option>
+            {% for option in status_choices %}
+            <option value="{{ option }}" {% if status == option %}selected{% endif %}>{{ option }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-mj-primary w-100">Filter</button>
+        </div>
+        <div class="col-md-3 text-md-end">
+          <a href="{{ url_for('admin.export_contacts', search=search, status=status) }}" class="btn btn-outline-secondary w-100">Export CSV</a>
+        </div>
+      </form>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.bulk_contacts_action') }}" id="bulkActionForm">
+      {{ csrf_token() }}
+      <input type="hidden" name="return_search" value="{{ search }}">
+      <input type="hidden" name="return_status" value="{{ status }}">
+      <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2 mb-3">
+        <div class="d-flex gap-2 flex-wrap">
+          <button type="button" class="btn btn-outline-light btn-sm" id="selectAllBtn">Select All</button>
+          <button type="button" class="btn btn-outline-light btn-sm" id="deselectAllBtn">Deselect All</button>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <select name="bulk_action" class="form-select form-select-sm w-auto" id="bulkActionSelect">
+            <option value="">Bulk actions</option>
+            <option value="mark_new">Mark as New</option>
+            <option value="mark_in_progress">Mark as In Progress</option>
+            <option value="mark_resolved">Mark as Resolved</option>
+            <option value="mark_spam">Mark as Spam</option>
+            <option value="delete">Delete Selected</option>
+          </select>
+          <button type="submit" class="btn btn-mj-primary btn-sm">Apply</button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-dark table-striped align-middle">
+          <thead>
+            <tr>
+              <th style="width: 42px;"><input type="checkbox" id="bulkSelectAll"></th>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Company</th>
+              <th>Subject</th>
+              <th>Status</th>
+              <th>Submitted</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+        <tbody>
+          {% for contact in contacts %}
+          <tr>
+            <td><input type="checkbox" name="selected_contacts" value="{{ contact.id }}" class="bulk-contact-checkbox"></td>
+            <td>{{ contact.id }}</td>
+            <td>{{ contact.name }}</td>
+            <td>{{ contact.email }}</td>
+            <td>{{ contact.company or '—' }}</td>
+            <td>{{ contact.subject }}</td>
+            <td><span class="badge bg-{{ 'secondary' if contact.status == 'New' else 'info' if contact.status == 'In Progress' else 'success' if contact.status == 'Resolved' else 'danger' }}">{{ contact.status }}</span></td>
+            <td>{{ contact.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td class="text-end">
+              <a href="{{ url_for('admin.contact_detail', contact_id=contact.id) }}" class="btn btn-sm btn-outline-light">View</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    </form>
+
+    <script>
+      const bulkSelectAll = document.getElementById('bulkSelectAll');
+      const contactCheckboxes = Array.from(document.querySelectorAll('.bulk-contact-checkbox'));
+      const selectAllBtn = document.getElementById('selectAllBtn');
+      const deselectAllBtn = document.getElementById('deselectAllBtn');
+      const bulkActionForm = document.getElementById('bulkActionForm');
+      const bulkActionSelect = document.getElementById('bulkActionSelect');
+
+      bulkSelectAll?.addEventListener('change', function() {
+        contactCheckboxes.forEach(cb => cb.checked = bulkSelectAll.checked);
+      });
+
+      selectAllBtn?.addEventListener('click', function() {
+        contactCheckboxes.forEach(cb => cb.checked = true);
+        if (bulkSelectAll) bulkSelectAll.checked = true;
+      });
+
+      deselectAllBtn?.addEventListener('click', function() {
+        contactCheckboxes.forEach(cb => cb.checked = false);
+        if (bulkSelectAll) bulkSelectAll.checked = false;
+      });
+
+      bulkActionForm?.addEventListener('submit', function(e) {
+        const selected = contactCheckboxes.some(cb => cb.checked);
+        if (!selected) {
+          e.preventDefault();
+          alert('Please select at least one contact to apply the bulk action.');
+          return;
+        }
+
+        if (bulkActionSelect.value === 'delete') {
+          const confirmed = confirm('Are you sure you want to permanently delete the selected contacts? This cannot be undone.');
+          if (!confirmed) {
+            e.preventDefault();
+          }
+        }
+      });
+    </script>
+
+    <nav aria-label="Contacts pagination">
+      <ul class="pagination justify-content-center">
+        {% if pagination.has_prev %}
+        <li class="page-item"><a class="page-link" href="{{ url_for('admin.contacts_list', page=pagination.prev_num, search=search, status=status) }}">Previous</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+        <li class="page-item {% if pagination.page == p %}active{% endif %}"><a class="page-link" href="{{ url_for('admin.contacts_list', page=p, search=search, status=status) }}">{{ p }}</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+        {% endfor %}
+
+        {% if pagination.has_next %}
+        <li class="page-item"><a class="page-link" href="{{ url_for('admin.contacts_list', page=pagination.next_num, search=search, status=status) }}">Next</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+</section>
+{% endblock %}

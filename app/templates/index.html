@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %}MJ WebTech Pvt. Ltd. — IT Solutions, Cloud & Digital Growth{% endblock %}
+{% block meta_desc %}MJ WebTech delivers software development, cloud migration, IT consulting and digital marketing for businesses across India. HQ Patna, Bihar.{% endblock %}
+
+{% block content %}
+
+<!-- ════ HERO ════ -->
+<section class="hero-section" id="home">
+  <div class="hero-bg-grid"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-orb hero-orb-3"></div>
+  <div class="container hero-container">
+    <div class="row align-items-center min-vh-100 py-5">
+      <div class="col-lg-6" data-aos="fade-right" data-aos-duration="900">
+        <div class="hero-badge mb-4">
+          <i class="bi bi-star-fill me-2 text-warning"></i>Trusted by 10+ Businesses Across India
+        </div>
+        <h1 class="hero-headline">
+          Transforming Ideas Into<span class="hero-accent"> Digital Reality</span>
+        </h1>
+        <p class="hero-subtext">From custom software and cloud migration to digital marketing and on-demand IT talent — MJ WebTech is your end-to-end technology partner.</p>
+        <div class="hero-cta d-flex flex-wrap gap-3 mt-4">
+          <a href="{{ url_for('main.services') }}" class="btn btn-mj-primary btn-lg px-5">Explore Services <i class="bi bi-arrow-right ms-2"></i></a>
+          <a href="{{ url_for('contact.contact', subject='Free Consultation') }}#contact-form-section" class="btn btn-mj-outline btn-lg px-5">Free Consultation</a>
+        </div>
+        <div class="hero-stats mt-5 d-flex flex-wrap gap-4">
+          <div class="stat-item"><span class="stat-num">10+</span><span class="stat-label">Happy Clients</span></div>
+          <div class="stat-divider"></div>
+          <div class="stat-item"><span class="stat-num">8+</span><span class="stat-label">Service Areas</span></div>
+          <div class="stat-divider"></div>
+          <div class="stat-item"><span class="stat-num">1st</span><span class="stat-label">Year of Growing</span></div>
+          <div class="stat-divider"></div>
+          <div class="stat-item"><span class="stat-num">15+</span><span class="stat-label">IT Experts</span></div>
+        </div>
+      </div>
+      <div class="col-lg-6 d-none d-lg-flex justify-content-center align-items-center" data-aos="fade-left" data-aos-duration="900" data-aos-delay="200">
+        <div class="hero-visual">
+          <div class="hero-card hc-main"><i class="bi bi-code-slash text-primary"></i><div><strong>Software Dev</strong><small>Web &amp; Mobile Apps</small></div></div>
+          <div class="hero-card hc-cloud"><i class="bi bi-cloud-upload text-info"></i><div><strong>Cloud Services</strong><small>AWS · Azure · GCP</small></div></div>
+          <div class="hero-card hc-marketing"><i class="bi bi-graph-up-arrow text-success"></i><div><strong>Digital Marketing</strong><small>SEO · Ads · Social</small></div></div>
+          <div class="hero-card hc-support"><i class="bi bi-headset text-warning"></i><div><strong>24/7 Support</strong><small>SLA Helpdesk</small></div></div>
+          <div class="hero-center-icon"><i class="bi bi-hexagon-fill"></i><span>MJ</span></div>
+          <svg class="hero-lines" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <line x1="200" y1="200" x2="60"  y2="80"  stroke="rgba(99,102,241,.3)" stroke-width="1.5" stroke-dasharray="4 4"/>
+            <line x1="200" y1="200" x2="340" y2="80"  stroke="rgba(99,102,241,.3)" stroke-width="1.5" stroke-dasharray="4 4"/>
+            <line x1="200" y1="200" x2="60"  y2="320" stroke="rgba(99,102,241,.3)" stroke-width="1.5" stroke-dasharray="4 4"/>
+            <line x1="200" y1="200" x2="340" y2="320" stroke="rgba(99,102,241,.3)" stroke-width="1.5" stroke-dasharray="4 4"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll"><div class="scroll-mouse"><div class="scroll-wheel"></div></div><span>Scroll Down</span></div>
+</section>
+
+<!-- ════ TECH MARQUEE ════ -->
+<section class="tech-strip py-3">
+  <div class="tech-marquee">
+    {% set techs = ['Python','Flask','Django','React','AWS','Azure','GCP','Docker','MySQL','PostgreSQL','Node.js','React Native','Kubernetes','TensorFlow','Terraform','SAP','Zoho CRM','Tally ERP'] %}
+    {% for t in techs %}<span class="tech-tag"><i class="bi bi-check-circle-fill me-1 text-mj-accent"></i>{{ t }}</span>{% endfor %}
+    {% for t in techs %}<span class="tech-tag"><i class="bi bi-check-circle-fill me-1 text-mj-accent"></i>{{ t }}</span>{% endfor %}
+  </div>
+</section>
+
+<!-- ════ SERVICES OVERVIEW ════ -->
+<section class="section-pad bg-mj-dark" id="services-overview">
+  <div class="container">
+    <div class="section-header text-center mb-5" data-aos="fade-up">
+      <div class="section-badge">What We Do</div>
+      <h2 class="section-title">Comprehensive IT <span class="text-mj-accent">Solutions</span></h2>
+      <p class="section-sub">Eight specialised service domains to cover every technology need — from inception to scale.</p>
+    </div>
+    <div class="row g-4">
+      {% for icon, color, title, desc in [
+        ('bi-code-slash','primary','Software Development','Custom web apps, mobile solutions & enterprise platforms built to your exact specs.'),
+        ('bi-boxes','success','Installation & Implementation','End-to-end hardware and software setup, ERP deployment & infrastructure rollouts.'),
+        ('bi-tools','warning','Maintenance & Customization','AMC, bug-fixing, feature additions & continuous performance optimisation.'),
+        ('bi-headset','info','Technical Support','Multi-tier helpdesk, remote assistance & on-site support with guaranteed SLAs.'),
+        ('bi-diagram-3','danger','IT Consulting & Integration','Strategic IT advisory, digital transformation roadmaps & system integration.'),
+        ('bi-cloud-upload','secondary','Cloud & Data Services','Cloud migration, data warehousing, BI dashboards & disaster recovery.'),
+        ('bi-graph-up-arrow','primary','Digital Marketing','SEO, Google Ads, social media campaigns & brand-building that deliver real ROI.'),
+        ('bi-people','success','Manpower Supply','Pre-vetted IT professionals, admin staff & BPO teams on contract or permanent basis.'),
+      ] %}
+      <div class="col-sm-6 col-lg-3" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 60 }}">
+        <div class="service-card-home h-100">
+          <div class="svc-icon-wrap svc-icon-{{ color }}"><i class="bi {{ icon }}"></i></div>
+          <h5 class="svc-title">{{ title }}</h5>
+          <p class="svc-desc">{{ desc }}</p>
+          <a href="{{ url_for('main.services') }}" class="svc-link">Learn more <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-5" data-aos="fade-up">
+      <a href="{{ url_for('main.services') }}" class="btn btn-mj-outline btn-lg px-5">View All Services <i class="bi bi-grid ms-2"></i></a>
+    </div>
+  </div>
+</section>
+
+<!-- ════ WHY US ════ -->
+<section class="section-pad">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-5" data-aos="fade-right">
+        <div class="section-badge">Why MJ WebTech</div>
+        <h2 class="section-title">Your Growth Is Our <span class="text-mj-accent">Mission</span></h2>
+        <p class="text-secondary mb-4">We combine deep technical expertise with genuine business understanding to deliver solutions that move the needle — not just beautiful demos.</p>
+        <div class="why-list">
+          {% for icon, title, desc in [
+            ('bi-trophy','Proven Track Record','Since March 2026, delivering quality IT projects on time and on budget across Bihar and beyond.'),
+            ('bi-shield-check','Security-First','Every solution is built with enterprise-grade security and data protection baked in from day one.'),
+            ('bi-clock-history','Rapid Delivery','Agile sprints with 2-week cycles. MVP in 4–6 weeks for most projects.'),
+            ('bi-telephone-inbound','Dedicated Support','Named support engineers who know your stack. Response <4 h, resolution <24 h.'),
+          ] %}
+          <div class="why-item" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 80 }}">
+            <div class="why-icon"><i class="bi {{ icon }}"></i></div>
+            <div><strong>{{ title }}</strong><p class="mb-0 text-secondary small">{{ desc }}</p></div>
+          </div>
+          {% endfor %}
+        </div>
+        <a href="{{ url_for('main.about') }}" class="btn btn-mj-primary mt-4 px-4">About Our Company <i class="bi bi-arrow-right ms-1"></i></a>
+      </div>
+      <div class="col-lg-7" data-aos="fade-left" data-aos-delay="200">
+        <div class="row g-3">
+          {% for icon, num, label, color in [
+            ('bi-laptop','15+','Projects Delivered','primary'),
+            ('bi-building','10+','Business Clients','success'),
+            ('bi-calculator','100%','On time Delivery','success'),
+            ('bi-person-check','95%','Client Retention','info'),
+          ] %}
+          <div class="col-6">
+            <div class="metrics-card metrics-{{ color }}">
+              <i class="bi {{ icon }}"></i>
+              <div class="metrics-num">{{ num }}</div>
+              <div class="metrics-label">{{ label }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ TESTIMONIALS ════ -->
+<section class="section-pad bg-mj-dark" id="testimonials">
+  <div class="container">
+    <div class="section-header text-center mb-5" data-aos="fade-up">
+      <div class="section-badge">Client Stories</div>
+      <h2 class="section-title">What Our Clients <span class="text-mj-accent">Say</span></h2>
+    </div>
+    <div class="row g-4 justify-content-center">
+      {% for t in testimonials %}
+      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 80 }}">
+        <div class="testimonial-card h-100">
+          <div class="stars mb-3">{% for _ in range(t.rating) %}<i class="bi bi-star-fill text-warning"></i>{% endfor %}</div>
+          <p class="testimonial-text">"{{ t.text }}"</p>
+          <div class="testimonial-author mt-3">
+            <div class="author-avatar">{{ t.name[0] }}</div>
+            <div><strong>{{ t.name }}</strong><small>{{ t.company }}</small></div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ════ CTA ════ -->
+<section class="cta-band" data-aos="fade-up">
+  <div class="container text-center">
+    <h2>Ready to Transform Your Business?</h2>
+    <p>Start with a free 30-minute strategy call — no strings attached.</p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap mt-4">
+      <a href="{{ url_for('contact.contact', subject='Free Consultation') }}#contact-form-section" class="btn btn-light btn-lg px-5 text-mj-dark fw-600"><i class="bi bi-calendar-check me-2"></i>Book Free Consultation</a>
+      <a href="tel:{{ company_phone }}" class="btn btn-outline-light btn-lg px-5"><i class="bi bi-telephone me-2"></i>{{ company_phone }}</a>
+    </div>
+  </div>
+</section>
+
+<!-- ════ BLOG PREVIEW ════ -->
+<section class="section-pad">
+  <div class="container">
+    <div class="section-header d-flex justify-content-between align-items-end mb-5 flex-wrap gap-3">
+      <div data-aos="fade-right"><div class="section-badge">Latest Insights</div><h2 class="section-title mb-0">From Our <span class="text-mj-accent">Blog</span></h2></div>
+      <a href="{{ url_for('blog.blog') }}" class="btn btn-mj-outline" data-aos="fade-left">All Articles <i class="bi bi-arrow-right ms-1"></i></a>
+    </div>
+    <div class="row g-4">
+      {% for icon, color, cat, title, slug, date, rt in [
+        ('bi-cloud-arrow-up','primary','Cloud','Cloud Migration Guide for Indian SMEs','cloud-migration-guide-2024','15 Mar 2026','8 min'),
+        ('bi-search','success','Digital Marketing','SEO Strategies That Work for Indian Businesses','seo-local-business-india','02 Feb 2026','6 min'),
+        ('bi-shield-check','danger','Cybersecurity','Cybersecurity Checklist for Small IT Teams','cybersecurity-smb-checklist','05 Jan 2026','5 min'),
+      ] %}
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
+        <a href="{{ url_for('blog.article', slug=slug) }}" class="blog-card-link">
+          <div class="blog-card h-100">
+            <div class="blog-card-icon blog-icon-{{ color }}"><i class="bi {{ icon }}"></i></div>
+            <div class="blog-card-body">
+              <span class="blog-cat">{{ cat }}</span>
+              <h5 class="blog-title">{{ title }}</h5>
+              <div class="blog-meta">
+                <span><i class="bi bi-calendar3 me-1"></i>{{ date }}</span>
+                <span><i class="bi bi-clock me-1"></i>{{ rt }} read</span>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const counters = document.querySelectorAll('[data-count]');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const el = e.target, target = +el.dataset.count;
+      let cur = 0;
+      const step = Math.max(1, Math.ceil(target / 60));
+      const t = setInterval(() => { cur = Math.min(cur + step, target); el.textContent = cur; if (cur >= target) clearInterval(t); }, 25);
+      obs.unobserve(el);
+    });
+  }, { threshold: 0.5 });
+  counters.forEach(c => obs.observe(c));
+});
+</script>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}About MJ WebTech Pvt. Ltd. — Our Story, Mission & Leadership Team{% endblock %}
+{% block meta_desc %}MJ WebTech Pvt. Ltd. — IT excellence in Siwan, Bihar. Learn our mission, vision, milestones and meet the leadership team.{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="container text-center" data-aos="fade-up">
+    <div class="section-badge">Our Story</div>
+    <h1 class="page-hero-title">About <span class="text-mj-accent">MJ WebTech</span></h1>
+    <p class="page-hero-sub">A new era of digital transformation — from a two-person startup to Bihar's leading IT services firm.</p>
+  </div>
+</section>
+
+<!-- Company Story -->
+<section class="section-pad">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6" data-aos="fade-right">
+        <div class="section-badge">Who We Are</div>
+        <h2 class="section-title">Built on <span class="text-mj-accent">Expertise</span>, Driven by <span class="text-mj-accent">Results</span></h2>
+        <p class="text-secondary">MJ WebTech Pvt. Ltd. was incorporated in 2026 with a simple premise: businesses in tier-2 India deserve world-class IT services at accessible prices. Founded in Siwan, Bihar, we began with software development and rapidly expanded across eight service domains as our client base grew.</p>
+        <p class="text-secondary">Today we serve 10+ clients spanning healthcare, finance, retail, logistics, education and government sectors — delivering everything from bespoke applications and cloud migrations to on-demand IT staffing and performance marketing campaigns.</p>
+        <p class="text-secondary">Our 15+ strong team of engineers, consultants, marketers and support specialists operate from our Siwan HQ with remote capabilities across India.</p>
+        <div class="mt-4 d-flex flex-wrap gap-3">
+          <div class="mini-stat"><strong>Mar 2026</strong><span>Founded</span></div>
+          <div class="mini-stat"><strong>15+</strong><span>Team Members</span></div>
+          <div class="mini-stat"><strong>10+</strong><span>Clients</span></div>
+          <div class="mini-stat"><strong>8+</strong><span>Service Lines</span></div>
+        </div>
+      </div>
+      <div class="col-lg-6" data-aos="fade-left">
+        <div class="about-visual">
+          <div class="about-card ac-1"><i class="bi bi-trophy-fill text-warning"></i><strong>1st Year</strong><span>of Excellence</span></div>
+          <div class="about-card ac-2"><i class="bi bi-geo-alt-fill text-danger"></i><strong>Siwan, Bihar</strong><span>Headquarters</span></div>
+          <div class="about-card ac-3"><i class="bi bi-globe2 text-info"></i><strong>Pan-India</strong><span>Service Delivery</span></div>
+          <div class="about-hexagon"><i class="bi bi-building"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Mission / Vision / Values -->
+<section class="section-pad bg-mj-dark">
+  <div class="container">
+    <div class="section-header text-center mb-5" data-aos="fade-up">
+      <div class="section-badge">Our Foundation</div>
+      <h2 class="section-title">Mission, Vision &amp; <span class="text-mj-accent">Values</span></h2>
+    </div>
+    <div class="row g-4">
+      {% for icon, color, heading, text in [
+        ('bi-bullseye','primary','Our Mission','To empower businesses of every size with technology solutions that are affordable, reliable and built for growth — with a human-first approach to every engagement.'),
+        ('bi-eye','success','Our Vision','To be the most trusted IT partner for Indian SMEs, recognised for innovation, integrity and the measurable business outcomes we deliver.'),
+        ('bi-heart','warning','Our Values','Integrity in every line of code. Accountability to every deadline. Innovation without compromise. Empathy for every client challenge.'),
+      ] %}
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
+        <div class="mvv-card">
+          <div class="mvv-icon mvv-icon-{{ color }}"><i class="bi {{ icon }}"></i></div>
+          <h4>{{ heading }}</h4>
+          <p>{{ text }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Timeline -->
+<section class="section-pad">
+  <div class="container">
+    <div class="section-header text-center mb-5" data-aos="fade-up">
+      <div class="section-badge">Our Journey</div>
+      <h2 class="section-title">Milestones &amp; <span class="text-mj-accent">Growth</span></h2>
+    </div>
+    <div class="timeline">
+      {% for year, title, desc, icon in [
+        ('Mar 2026','Company Founded','MJ WebTech Pvt. Ltd. incorporated in Siwan, Bihar. First three clients onboarded within 30 days.','bi-flag-fill'),
+        ('Apr 2026','Cloud Practice Launch','Launched dedicated cloud services division — AWS, Azure & GCP partnerships.','bi-cloud-fill'),
+        ('Apr 2026','Team of 15+','Headcount crossed 15+ members. Digital marketing division established.','bi-people-fill'),
+      ] %}
+      <div class="timeline-item" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 60 }}">
+        <div class="timeline-year">{{ year }}</div>
+        <div class="timeline-dot"><i class="bi {{ icon }}"></i></div>
+        <div class="timeline-content"><h5>{{ title }}</h5><p>{{ desc }}</p></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Team -->
+<section class="section-pad bg-mj-dark">
+  <div class="container">
+    <div class="section-header text-center mb-5" data-aos="fade-up">
+      <div class="section-badge">Leadership</div>
+      <h2 class="section-title">Meet the <span class="text-mj-accent">Team</span></h2>
+    </div>
+    <div class="row g-4 justify-content-center">
+      {% for member in team %}
+      <div class="col-sm-6 col-lg-3" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 80 }}">
+        <div class="team-card">
+          <div class="team-avatar"><i class="bi {{ member.icon }}"></i></div>
+          <h5>{{ member.name }}</h5>
+          <span>{{ member.role }}</span>
+          <div class="team-socials">
+            <a href="#" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+            <a href="#" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="cta-band" data-aos="fade-up">
+  <div class="container text-center">
+    <h2>Let's Build Something Great Together</h2>
+    <p>Contact us for a free consultation — no commitment required.</p>
+    <a href="{{ url_for('contact.contact', subject='General Enquiry') }}#contact-form-section" class="btn btn-light btn-lg px-5 mt-3 text-mj-dark fw-600"><i class="bi bi-envelope-arrow-up me-2"></i>Get In Touch</a>
+  </div>
+</section>
+{% endblock %}

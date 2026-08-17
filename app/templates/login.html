@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Login - MJ WebTech{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Welcome Back</h1>
+                <p>Sign in to continue to MJ WebTech.</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('auth.login') }}" id="loginForm">
+                <input type="hidden" name="next" value="{{ next_page|default('') }}" />
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Login</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Create one</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.auth-page {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: var(--mj-dark);
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 450px;
+}
+
+.auth-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.auth-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.auth-header p {
+    color: var(--text-secondary);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.btn-block {
+    width: 100%;
+    padding: 14px;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.auth-footer p {
+    color: var(--text-secondary);
+    margin: 0;
+}
+</style>
+{% endblock %}

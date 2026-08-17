@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} — MJ WebTech Insights{% endblock %}
+{% block meta_desc %}{{ post.summary[:160] }}{% endblock %}
+{% block og_title %}{{ post.title }}{% endblock %}
+{% block og_desc %}{{ post.summary[:160] }}{% endblock %}
+
+{% block content %}
+<!-- Article Header -->
+<section class="page-hero page-hero-sm">
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="container" data-aos="fade-up">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 text-center">
+        <a href="{{ url_for('blog.blog') }}" class="article-pill mb-4 me-2">
+          <i class="bi bi-arrow-left me-1"></i>All Articles
+        </a>
+        <span class="article-pill">{{ post.category }}</span>
+        <h1 class="page-hero-title fs-2 mt-3">{{ post.title }}</h1>
+        <p class="article-summary-highlight mt-2">{{ post.summary }}</p>
+        <div class="d-flex justify-content-center gap-4 mt-4 flex-wrap">
+          <span class="article-meta-pill"><i class="bi bi-person-fill me-1"></i>{{ post.author }}</span>
+          <span class="article-meta-pill"><i class="bi bi-calendar3 me-1"></i>{{ post.date }}</span>
+          <span class="article-meta-pill"><i class="bi bi-clock me-1"></i>{{ post.read_time }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-pad">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+
+        <!-- Article body -->
+        <div class="article-body" data-aos="fade-up">
+          {{ post.body | safe }}
+        </div>
+
+        <!-- Tags / Share -->
+        <div class="article-footer mt-5 d-flex align-items-center justify-content-between flex-wrap gap-3" data-aos="fade-up">
+          <div class="d-flex gap-2 flex-wrap">
+            <span class="job-skills-tag">{{ post.category }}</span>
+            <span class="job-skills-tag">MJ WebTech</span>
+            <span class="job-skills-tag">IT Insights</span>
+          </div>
+          <div class="d-flex gap-2">
+            <a href="https://twitter.com/intent/tweet?text={{ post.title | urlencode }}&url={{ request.url | urlencode }}" target="_blank" rel="noopener" class="btn btn-sm btn-mj-outline">
+              <i class="bi bi-twitter-x me-1"></i>Share
+            </a>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.url | urlencode }}" target="_blank" rel="noopener" class="btn btn-sm btn-mj-outline">
+              <i class="bi bi-linkedin me-1"></i>Share
+            </a>
+          </div>
+        </div>
+
+        <!-- CTA box -->
+        <div class="article-cta mt-5 text-center" data-aos="fade-up">
+          <i class="bi bi-chat-dots-fill fs-1 text-mj-accent mb-3 d-block"></i>
+          <h4>Need Help Implementing This?</h4>
+          <p class="text-muted">Talk to our experts — free 30-minute consultation, no obligation.</p>
+          <a href="{{ url_for('contact.contact', subject='Free Consultation') }}#contact-form-section" class="btn btn-mj-primary btn-lg px-5 mt-2">
+            Get Free Consultation <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+        </div>
+
+        <!-- Related articles -->
+        {% if related %}
+        <div class="mt-5" data-aos="fade-up">
+          <hr class="border-color mb-4"/>
+          <h5 class="mb-4">Related Articles</h5>
+          <div class="row g-3">
+            {% for rel in related %}
+            <div class="col-md-4">
+              <a href="{{ url_for('blog.article', slug=rel.slug) }}" class="blog-card-link">
+                <div class="blog-card">
+                  <div class="blog-card-icon blog-icon-{{ rel.color }} py-4"><i class="bi {{ rel.icon }}"></i></div>
+                  <div class="blog-card-body">
+                    <span class="blog-cat">{{ rel.category }}</span>
+                    <h6 class="blog-title">{{ rel.title }}</h6>
+                    <div class="blog-meta"><span><i class="bi bi-clock me-1"></i>{{ rel.read_time }}</span></div>
+                  </div>
+                </div>
+              </a>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="mt-5" data-aos="fade-up">
+          <a href="{{ url_for('blog.blog') }}" class="btn btn-mj-outline px-4">
+            <i class="bi bi-arrow-left me-1"></i>Back to All Articles
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+.article-pill {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(99,102,241,0.10);
+  border: 1.5px solid var(--mj-accent-2);
+  color: var(--mj-accent-2);
+  font-weight: 700;
+  font-size: .92rem;
+  padding: 7px 22px;
+  border-radius: 100px;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.04em;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  text-transform: uppercase;
+  box-shadow: none;
+  text-decoration: none;
+}
+.article-pill:hover, .article-pill:focus {
+  background: var(--mj-accent-2);
+  color: #fff;
+  border-color: var(--mj-accent-2);
+  text-decoration: none;
+}
+.article-meta-pill {
+  background: var(--mj-dark-3);
+  border: 1px solid var(--border-color);
+  color: #CBD5E1;
+  padding: 5px 14px;
+  border-radius: 100px;
+  font-size: .78rem;
+}
+.job-skills-tag {
+  background: var(--mj-dark-3);
+  border: 1px solid var(--border-color);
+  color: var(--mj-accent-2);
+  padding: 4px 14px;
+  border-radius: 100px;
+  font-size: .78rem;
+}
+.article-summary-highlight {
+  color: #E5E7EB;
+  font-size: 1.08rem;
+  margin-bottom: 0.5rem;
+}
+.border-color {
+  border-color: var(--border-color)!important;
+}
+</style>
+{% endblock %}

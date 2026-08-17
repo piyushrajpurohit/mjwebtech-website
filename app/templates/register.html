@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block title %}Register - MJ WebTech{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Create Account</h1>
+                <p>Join MJ WebTech Pvt. Ltd.</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('auth.register') }}" id="registerForm">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" class="form-control" 
+                           placeholder="Enter your full name" required minlength="2">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <div class="input-group">
+                        <input type="email" id="email" name="email" class="form-control" 
+                               placeholder="Enter your email" required>
+                        <button type="button" id="sendOtpBtn" class="btn btn-secondary btn-sm">
+                            Send OTP
+                        </button>
+                    </div>
+                    <small class="form-text text-muted">We'll send an OTP to verify your email</small>
+                </div>
+
+                <!-- OTP Verification Section -->
+                <div class="otp-section" id="otpSection" style="display: none;">
+                    <div class="form-group">
+                        <label for="otp">Enter OTP</label>
+                        <div class="input-group">
+                            <input type="text" id="otp" name="otp" class="form-control" 
+                                   placeholder="Enter 6-digit OTP" maxlength="6" pattern="\d{6}">
+                            <button type="button" id="verifyOtpBtn" class="btn btn-primary btn-sm">
+                                Verify
+                            </button>
+                        </div>
+                        <div class="otp-actions">
+                            <span id="otpTimer" class="otp-timer"></span>
+                            <button type="button" id="resendOtpBtn" class="btn btn-link btn-sm" disabled>
+                                Resend OTP
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" 
+                           placeholder="Create a password" required minlength="6">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" 
+                           placeholder="Confirm your password" required>
+                </div>
+
+                <div class="form-group form-check">
+                    <input type="checkbox" class="form-check-input" id="terms" required>
+                    <label class="form-check-label" for="terms">
+                        I agree to the <a href="{{ url_for('main.index') }}#">Terms & Privacy Policy</a>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" id="submitBtn" disabled>
+                    Create Account
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Already have an account? <a href="{{ url_for('auth.login') }}">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.auth-page {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: var(--mj-dark);
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 450px;
+}
+
+.auth-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.auth-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.auth-header p {
+    color: var(--text-secondary);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.input-group .form-control {
+    flex: 1;
+}
+
+.input-group .btn {
+    white-space: nowrap;
+    padding: 10px 16px;
+}
+
+.otp-section {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.otp-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.otp-timer {
+    color: var(--mj-warning);
+    font-size: 0.875rem;
+}
+
+.btn-block {
+    width: 100%;
+    padding: 14px;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.btn-block:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.auth-footer p {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.form-text {
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+</style>
+
+<script>
+let emailVerified = false;
+let otpTimerInterval = null;
+
+document.getElementById('sendOtpBtn').addEventListener('click', function() {
+    const email = document.getElementById('email').value.trim();
+    
+    if (!email) {
+        alert('Please enter your email address.');
+        return;
+    }
+    
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailPattern.test(email)) {
+        alert('Please enter a valid email address.');
+        return;
+    }
+    
+    this.disabled = true;
+    this.textContent = 'Sending...';
+    
+    fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('otpSection').style.display = 'block';
+            document.getElementById('sendOtpBtn').textContent = 'OTP Sent';
+            startOtpTimer(data.expires_in);
+            alert(data.message);
+        } else {
+            alert(data.message);
+            this.disabled = false;
+            this.textContent = 'Send OTP';
+        }
+    })
+    .catch(error => {
+        alert('An error occurred. Please try again.');
+        this.disabled = false;
+        this.textContent = 'Send OTP';
+    });
+});
+
+document.getElementById('verifyOtpBtn').addEventListener('click', function() {
+    const email = document.getElementById('email').value.trim();
+    const otp = document.getElementById('otp').value.trim();
+    
+    if (!otp || otp.length !== 6) {
+        alert('Please enter the 6-digit OTP.');
+        return;
+    }
+    
+    this.disabled = true;
+    this.textContent = 'Verifying...';
+    
+    fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, otp: otp })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            emailVerified = true;
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('otpSection').style.display = 'none';
+            document.getElementById('email').readOnly = true;
+            document.getElementById('sendOtpBtn').style.display = 'none';
+            alert(data.message);
+        } else {
+            alert(data.message);
+            this.disabled = false;
+            this.textContent = 'Verify';
+        }
+    })
+    .catch(error => {
+        alert('An error occurred. Please try again.');
+        this.disabled = false;
+        this.textContent = 'Verify';
+    });
+});
+
+document.getElementById('resendOtpBtn').addEventListener('click', function() {
+    const email = document.getElementById('email').value.trim();
+    
+    fetch('/api/auth/resend-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            startOtpTimer(data.expires_in);
+            alert(data.message);
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        alert('An error occurred. Please try again.');
+    });
+});
+
+function startOtpTimer(seconds) {
+    clearInterval(otpTimerInterval);
+    
+    const timerEl = document.getElementById('otpTimer');
+    const resendBtn = document.getElementById('resendOtpBtn');
+    
+    resendBtn.disabled = true;
+    
+    otpTimerInterval = setInterval(() => {
+        seconds--;
+        
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        timerEl.textContent = `Resend available in ${mins}:${secs.toString().padStart(2, '0')}`;
+        
+        if (seconds <= 0) {
+            clearInterval(otpTimerInterval);
+            timerEl.textContent = '';
+            resendBtn.disabled = false;
+        }
+    }, 1000);
+}
+
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    if (!emailVerified) {
+        alert('Please verify your email before creating your account.');
+        return;
+    }
+
+    const payload = {
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value,
+        confirm_password: document.getElementById('confirm_password').value
+    };
+
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating account...';
+
+    fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(async response => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || 'Registration failed.');
+        alert(data.message || 'Registration successful.');
+        window.location.href = '/';
+    })
+    .catch(error => {
+        alert(error.message || 'An error occurred. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Account';
+    });
+});
+</script>
+{% endblock %}

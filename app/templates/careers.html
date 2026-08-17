@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Careers at MJ WebTech Pvt. Ltd. — Join Our IT Team{% endblock %}
+{% block meta_desc %}Explore open IT, marketing and support positions at MJ WebTech Pvt. Ltd. in Patna, Bihar. Competitive salaries, great culture, career growth.{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="container text-center" data-aos="fade-up">
+    <div class="section-badge">Join Our Team</div>
+    <h1 class="page-hero-title">Build Your Career at <span class="text-mj-accent">MJ WebTech</span></h1>
+    <p class="page-hero-sub">We're building Bihar's leading IT company — and we want you on the team.</p>
+    <a href="{{ url_for('careers.apply') }}" class="btn btn-mj-primary btn-lg px-5 mt-4">
+      <i class="bi bi-send me-2"></i>Apply Now
+    </a>
+  </div>
+</section>
+
+<!-- Culture perks -->
+<section class="section-pad">
+  <div class="container">
+    <div class="row g-4 mb-5">
+      {% for icon, color, title, desc in [
+        ('bi-lightbulb','primary','Continuous Learning','₹15,000 annual learning budget, weekly tech talks and conference sponsorships for every team member.'),
+        ('bi-heart','success','Great Culture','Collaborative and merit-based — your ideas get heard regardless of seniority. Zero politics, 100% focus.'),
+        ('bi-graph-up','warning','Career Growth','Clear growth paths from junior to senior to lead. We promote from within before looking outside.'),
+        ('bi-shield-check','info','Job Security','Bootstrapped and profitable for 10 years. Zero layoffs — even through COVID-19.'),
+        ('bi-coin','danger','Competitive Pay','Market-aligned salaries with annual increments, performance bonuses and health insurance.'),
+        ('bi-laptop','secondary','Hybrid Work','Flexible work-from-home options for eligible roles, modern Patna office for when you\'re in.'),
+      ] %}
+      <div class="col-sm-6 col-lg-4" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 60 }}">
+        <div class="culture-card text-center h-100">
+          <div class="svc-icon-wrap svc-icon-{{ color }} mx-auto mb-3"><i class="bi {{ icon }}"></i></div>
+          <h6 class="fw-700 mb-2">{{ title }}</h6>
+          <p class="text-secondary small mb-0">{{ desc }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Job listings -->
+    <div class="section-header mb-4" data-aos="fade-up">
+      <div class="section-badge">Open Positions</div>
+      <h2 class="section-title">Current <span class="text-mj-accent">Openings</span></h2>
+      <p class="text-secondary">{{ jobs|length }} positions currently open — all roles are full-time unless stated.</p>
+    </div>
+
+    <div class="row g-4">
+      {% for job in jobs %}
+      <div class="col-lg-6" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 50 }}">
+        <div class="job-card h-100 d-flex flex-column">
+          <div class="job-header">
+            <div class="job-icon"><i class="bi {{ job.icon }}"></i></div>
+            <div class="flex-grow-1">
+              <h5 class="job-title mb-0">{{ job.title }}</h5>
+              <span class="job-dept">{{ job.department }}</span>
+            </div>
+            <span class="job-badge">{{ job.type }}</span>
+          </div>
+          <p class="text-secondary small mt-3 mb-2">{{ job.description }}</p>
+          <div class="job-meta mb-3">
+            <span><i class="bi bi-geo-alt me-1"></i>{{ job.location }}</span>
+            <span><i class="bi bi-briefcase me-1"></i>{{ job.experience }}</span>
+          </div>
+          <ul class="job-skills mb-3">
+            {% for req in job.requirements %}<li>{{ req }}</li>{% endfor %}
+          </ul>
+          <div class="mt-auto pt-2">
+            <a href="{{ url_for('careers.apply') }}?position={{ job.title | urlencode }}"
+               class="btn btn-mj-primary w-100">
+              Apply for This Role <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Open application -->
+    <div class="open-application-card mt-5 text-center" data-aos="fade-up">
+      <i class="bi bi-envelope-plus fs-1 text-mj-accent mb-3 d-block"></i>
+      <h4>Don't See the Right Role?</h4>
+      <p class="text-secondary mb-4">We're always interested in exceptional talent. Send us your CV and we'll reach out when a match opens up.</p>
+      <a href="{{ url_for('careers.apply') }}" class="btn btn-mj-outline btn-lg px-5">
+        <i class="bi bi-person-plus me-2"></i>Submit Open Application
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="cta-band" data-aos="fade-up">
+  <div class="container text-center">
+    <h2>Questions About Working at MJ WebTech?</h2>
+    <p>Email us at <strong>careers@mjwebtech.com</strong> — we respond to every message.</p>
+    <a href="mailto:careers@mjwebtech.com" class="btn btn-light btn-lg px-5 mt-3 text-mj-dark fw-600">
+      <i class="bi bi-envelope me-2"></i>Email Careers Team
+    </a>
+  </div>
+</section>
+{% endblock %}

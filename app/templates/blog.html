@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Insights & Blog — MJ WebTech Pvt. Ltd.{% endblock %}
+{% block meta_desc %}Technology insights, IT industry trends and practical guides from the experts at MJ WebTech Pvt. Ltd. — cloud, cybersecurity, digital marketing and more.{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="container text-center" data-aos="fade-up">
+    <div class="section-badge">Knowledge Hub</div>
+    <h1 class="page-hero-title">Insights &amp; <span class="text-mj-accent">Articles</span></h1>
+    <p class="page-hero-sub">Technology perspectives, practical guides and industry news from the MJ WebTech team.</p>
+  </div>
+</section>
+
+<section class="section-pad">
+  <div class="container">
+    <!-- Category filter pills (cosmetic — no JS routing needed server-side) -->
+    <div class="d-flex flex-wrap gap-2 mb-5 justify-content-center" data-aos="fade-up">
+      <button class="blog-filter active" onclick="filterBlog(this,'all')">All Topics</button>
+      {% set cats = articles | map(attribute='category') | unique | list %}
+      {% for cat in cats %}
+      <button class="blog-filter" onclick="filterBlog(this,'{{ cat | lower | replace(' ','_') | replace('&','') }}')">{{ cat }}</button>
+      {% endfor %}
+    </div>
+
+    <div class="row g-4" id="blogGrid">
+      {% for article in articles %}
+      <div class="col-md-6 col-lg-4 blog-item" data-category="{{ article.category | lower | replace(' ','_') | replace('&','') }}" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 60 }}">
+        <a href="{{ url_for('blog.article', slug=article.slug) }}" class="blog-card-link">
+          <div class="blog-card h-100">
+            <div class="blog-card-icon blog-icon-{{ article.color }}">
+              <i class="bi {{ article.icon }}"></i>
+            </div>
+            <div class="blog-card-body">
+              <span class="blog-cat">{{ article.category }}</span>
+              <h5 class="blog-title">{{ article.title }}</h5>
+              <p class="blog-summary">{{ article.summary[:110] }}…</p>
+              <div class="blog-meta">
+                <span><i class="bi bi-person me-1"></i>{{ article.author }}</span>
+                <span><i class="bi bi-calendar3 me-1"></i>{{ article.date }}</span>
+                <span><i class="bi bi-clock me-1"></i>{{ article.read_time }}</span>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div id="noResults" class="text-center py-5 d-none">
+      <i class="bi bi-search fs-1 text-muted mb-3 d-block"></i>
+      <p class="text-muted">No articles in this category yet. Check back soon!</p>
+    </div>
+  </div>
+</section>
+
+<!-- Newsletter CTA -->
+<section class="cta-band" data-aos="fade-up">
+  <div class="container text-center">
+    <h2>Stay Ahead of the Curve</h2>
+    <p>Get our latest IT insights delivered straight to your inbox — no spam, unsubscribe anytime.</p>
+    <a href="{{ url_for('contact.contact', subject='Newsletter Subscription') }}#contact-form-section" class="btn btn-light btn-lg px-5 mt-3 text-mj-dark fw-600">
+      <i class="bi bi-envelope me-2"></i>Subscribe to Newsletter
+    </a>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Client-side category filter
+const filterBtns = document.querySelectorAll('.blog-filter');
+const blogItems  = document.querySelectorAll('.blog-item');
+const noResults  = document.getElementById('noResults');
+
+function filterBlog(btn, cat) {
+  filterBtns.forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  let visible = 0;
+  blogItems.forEach(item => {
+    const show = cat === 'all' || item.dataset.category === cat;
+    item.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  noResults.classList.toggle('d-none', visible > 0);
+}
+</script>
+<style>
+.blog-filter{background:var(--mj-dark-3);border:1px solid var(--border-color);color:var(--text-muted);padding:6px 18px;border-radius:100px;font-size:.82rem;font-weight:600;cursor:pointer;transition:var(--transition)}
+.blog-filter:hover,.blog-filter.active{background:var(--mj-accent);border-color:var(--mj-accent);color:#fff}
+</style>
+{% endblock %}

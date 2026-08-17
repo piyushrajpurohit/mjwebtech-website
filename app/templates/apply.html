@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+{% block title %}Apply — MJ WebTech Pvt. Ltd.{% endblock %}
+{% block meta_desc %}Submit your job application to MJ WebTech Pvt. Ltd. Upload your resume and apply for IT, marketing, support and business roles.{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero-sm">
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="container text-center" data-aos="fade-up">
+    <div class="section-badge">Career Application</div>
+    <h1 class="page-hero-title">Submit Your <span class="text-mj-accent">Application</span></h1>
+    <p class="page-hero-sub">We review every application carefully. Expect a response within 5–7 business days.</p>
+  </div>
+</section>
+
+<section class="section-pad">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-xl-8 col-lg-9" data-aos="fade-up">
+
+        <!-- Progress steps -->
+        <div class="apply-steps mb-4">
+          <div class="apply-step active"><span>1</span>Fill Details</div>
+          <div class="apply-step-line"></div>
+          <div class="apply-step"><span>2</span>Upload Resume</div>
+          <div class="apply-step-line"></div>
+          <div class="apply-step"><span>3</span>Submit</div>
+        </div>
+
+        <div class="contact-form-card">
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="apply-form-icon"><i class="bi bi-person-badge"></i></div>
+            <div>
+              <h3 class="mb-0">Job <span class="text-mj-accent">Application</span></h3>
+              <p class="text-muted small mb-0">All fields marked <span class="text-danger">*</span> are required.</p>
+            </div>
+          </div>
+
+          <form method="POST" action="{{ url_for('careers.apply') }}"
+                enctype="multipart/form-data" novalidate id="applyForm">
+            {{ form.hidden_tag() }}
+
+            <div class="row g-3">
+              <!-- Full Name -->
+              <div class="col-md-6">
+                {{ form.full_name.label(class="form-label") }}<span class="text-danger ms-1">*</span>
+                {{ form.full_name(class="form-control mj-input" + (" is-invalid" if form.full_name.errors else ""), placeholder="Your full name") }}
+                {% for err in form.full_name.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+              </div>
+              <!-- Email -->
+              <div class="col-md-6">
+                {{ form.email.label(class="form-label") }}<span class="text-danger ms-1">*</span>
+                <div class="input-group">
+                  {{ form.email(class="form-control mj-input" + (" is-invalid" if form.email.errors else ""), placeholder="you@email.com", id="applicationEmail") }}
+                  <button type="button" class="btn btn-outline-secondary" id="sendOtpBtn">
+                    <i class="bi bi-envelope me-1"></i>Verify
+                  </button>
+                </div>
+                {% for err in form.email.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+                <div class="form-text text-muted">Verify email before applying</div>
+              </div>
+              <!-- OTP Verification -->
+              <div class="col-12 otp-verification-section" id="otpSection" style="display: none;">
+                <div class="alert alert-info">
+                  <div class="row align-items-center">
+                    <div class="col-md-8">
+                      <label class="form-label mb-2">Enter OTP sent to your email</label>
+                      <div class="input-group">
+                        <input type="text" class="form-control" id="applicationOtp" 
+                               placeholder="Enter 6-digit OTP" maxlength="6">
+                        <button type="button" class="btn btn-primary" id="verifyOtpBtn">Verify</button>
+                      </div>
+                    </div>
+                    <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                      <span id="otpTimer" class="text-warning small"></span>
+                      <button type="button" class="btn btn-link btn-sm d-block" id="resendOtpBtn" disabled>
+                        Resend OTP
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Phone -->
+              <div class="col-md-6">
+                {{ form.phone.label(class="form-label") }}<span class="text-danger ms-1">*</span>
+                {{ form.phone(class="form-control mj-input" + (" is-invalid" if form.phone.errors else ""), placeholder="+91 98765 43210") }}
+                {% for err in form.phone.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+              </div>
+              <!-- Experience -->
+              <div class="col-md-6">
+                {{ form.experience.label(class="form-label") }}
+                {{ form.experience(class="form-select mj-input" + (" is-invalid" if form.experience.errors else "")) }}
+                {% for err in form.experience.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+              </div>
+              <!-- Position -->
+              <div class="col-12">
+                {{ form.position.label(class="form-label") }}<span class="text-danger ms-1">*</span>
+                {{ form.position(class="form-select mj-input" + (" is-invalid" if form.position.errors else "")) }}
+                {% for err in form.position.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+              </div>
+              <!-- Resume Upload -->
+              <div class="col-12">
+                <label class="form-label">{{ form.resume.label.text }}<span class="text-danger ms-1">*</span></label>
+                <div class="upload-zone" id="uploadZone">
+                  <input type="file" name="resume" id="resumeInput"
+                         class="upload-input {% if form.resume.errors %}is-invalid{% endif %}"
+                         accept=".pdf,.doc,.docx"/>
+                  <div class="upload-ui" id="uploadUI">
+                    <i class="bi bi-cloud-arrow-up-fill fs-1 text-mj-accent mb-2"></i>
+                    <p class="mb-1 fw-600">Drag & drop or <span class="text-mj-accent">click to upload</span></p>
+                    <p class="text-muted small mb-0">PDF, DOC, DOCX — Maximum 5 MB</p>
+                  </div>
+                  <div class="upload-preview d-none" id="uploadPreview">
+                    <i class="bi bi-file-earmark-check-fill fs-1 text-success mb-2"></i>
+                    <p class="fw-600 mb-0" id="uploadFileName"></p>
+                    <p class="text-muted small" id="uploadFileSize"></p>
+                    <button type="button" class="btn btn-sm btn-outline-danger mt-2" id="removeFile">
+                      <i class="bi bi-x me-1"></i>Remove
+                    </button>
+                  </div>
+                </div>
+                {% for err in form.resume.errors %}<div class="text-danger small mt-1"><i class="bi bi-exclamation-triangle me-1"></i>{{ err }}</div>{% endfor %}
+              </div>
+              <!-- Cover Letter -->
+              <div class="col-12">
+                {{ form.cover_letter.label(class="form-label") }}
+                {{ form.cover_letter(class="form-control mj-input", rows=4, placeholder="Tell us why you're a great fit for this role, what makes you stand out, and your career goals…") }}
+                <div class="form-text text-muted">Optional but highly recommended. Max 3000 characters.</div>
+              </div>
+              <!-- Submit -->
+              <div class="col-12 mt-3">
+                <button type="submit" class="btn btn-mj-primary btn-lg w-100" id="applySubmitBtn">
+                  <i class="bi bi-send me-2"></i>Submit Application
+                </button>
+                <p class="text-center text-muted small mt-3">
+                  By submitting you agree to our privacy policy. Your data is used only for recruitment purposes.
+                </p>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="text-center mt-4">
+          <a href="{{ url_for('careers.careers') }}" class="btn btn-mj-outline px-4">
+            <i class="bi bi-arrow-left me-1"></i>Back to Job Listings
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let emailVerified = false;
+let otpTimerInterval = null;
+
+(function() {
+  const input    = document.getElementById('resumeInput');
+  const zone     = document.getElementById('uploadZone');
+  const ui       = document.getElementById('uploadUI');
+  const preview  = document.getElementById('uploadPreview');
+  const nameEl   = document.getElementById('uploadFileName');
+  const sizeEl   = document.getElementById('uploadFileSize');
+  const removeBtn= document.getElementById('removeFile');
+  const submitBtn= document.getElementById('applySubmitBtn');
+
+  // OTP Elements
+  const sendOtpBtn = document.getElementById('sendOtpBtn');
+  const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+  const resendOtpBtn = document.getElementById('resendOtpBtn');
+  const otpSection = document.getElementById('otpSection');
+  const otpTimer = document.getElementById('otpTimer');
+  const emailInput = document.getElementById('applicationEmail');
+  const otpInput = document.getElementById('applicationOtp');
+
+  // Send OTP
+  sendOtpBtn?.addEventListener('click', function() {
+    const email = emailInput?.value.trim();
+    if (!email) {
+      alert('Please enter your email address first.');
+      return;
+    }
+    
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailPattern.test(email)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+    
+    sendOtpBtn.disabled = true;
+    sendOtpBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
+    
+    fetch('/api/careers/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        otpSection.style.display = 'block';
+        sendOtpBtn.textContent = 'Sent ✓';
+        startOtpTimer(data.expires_in);
+        alert(data.message);
+      } else {
+        alert(data.message);
+        sendOtpBtn.disabled = false;
+        sendOtpBtn.innerHTML = '<i class="bi bi-envelope me-1"></i>Verify';
+      }
+    })
+    .catch(error => {
+      alert('An error occurred. Please try again.');
+      sendOtpBtn.disabled = false;
+      sendOtpBtn.innerHTML = '<i class="bi bi-envelope me-1"></i>Verify';
+    });
+  });
+
+  // Verify OTP
+  verifyOtpBtn?.addEventListener('click', function() {
+    const email = emailInput?.value.trim();
+    const otp = otpInput?.value.trim();
+    
+    if (!otp || otp.length !== 6) {
+      alert('Please enter the 6-digit OTP.');
+      return;
+    }
+    
+    verifyOtpBtn.disabled = true;
+    verifyOtpBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Verifying...';
+    
+    fetch('/api/careers/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, otp: otp })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        emailVerified = true;
+        otpSection.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>Email verified! You can now submit your application.</div>';
+        submitBtn.disabled = false;
+        emailInput.readOnly = true;
+        sendOtpBtn.style.display = 'none';
+      } else {
+        alert(data.message);
+        verifyOtpBtn.disabled = false;
+        verifyOtpBtn.textContent = 'Verify';
+      }
+    })
+    .catch(error => {
+      alert('An error occurred. Please try again.');
+      verifyOtpBtn.disabled = false;
+      verifyOtpBtn.textContent = 'Verify';
+    });
+  });
+
+  // Resend OTP
+  resendOtpBtn?.addEventListener('click', function() {
+    const email = emailInput?.value.trim();
+    
+    fetch('/api/careers/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        startOtpTimer(data.expires_in);
+        alert(data.message);
+      } else {
+        alert(data.message);
+      }
+    })
+    .catch(error => {
+      alert('An error occurred. Please try again.');
+    });
+  });
+
+  function startOtpTimer(seconds) {
+    clearInterval(otpTimerInterval);
+    resendOtpBtn.disabled = true;
+    
+    otpTimerInterval = setInterval(() => {
+      seconds--;
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      otpTimer.textContent = `Resend in ${mins}:${secs.toString().padStart(2, '0')}`;
+      
+      if (seconds <= 0) {
+        clearInterval(otpTimerInterval);
+        otpTimer.textContent = '';
+        resendOtpBtn.disabled = false;
+      }
+    }, 1000);
+  }
+
+  function showFile(file) {
+    if (!file) return;
+    const mb = (file.size / 1024 / 1024).toFixed(2);
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File exceeds 5 MB limit. Please upload a smaller file.');
+      input.value = '';
+      return;
+    }
+    nameEl.textContent = file.name;
+    sizeEl.textContent = mb + ' MB';
+    ui.classList.add('d-none');
+    preview.classList.remove('d-none');
+    zone.classList.add('has-file');
+  }
+
+  input?.addEventListener('change', () => showFile(input.files[0]));
+
+  // Drag & drop
+  zone?.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone?.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone?.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) { input.files = e.dataTransfer.files; showFile(file); }
+  });
+  // Click anywhere on zone triggers input
+  ui?.addEventListener('click', () => input.click());
+
+  removeBtn?.addEventListener('click', () => {
+    input.value = '';
+    ui.classList.remove('d-none');
+    preview.classList.add('d-none');
+    zone.classList.remove('has-file');
+  });
+
+  document.getElementById('applyForm')?.addEventListener('submit', function(e) {
+    if (!emailVerified) {
+      e.preventDefault();
+      alert('Please verify your email with OTP before submitting.');
+      return;
+    }
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Submitting…';
+    submitBtn.disabled = true;
+  });
+})();
+</script>
+{% endblock %}

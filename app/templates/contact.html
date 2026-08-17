@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+{% block title %}Contact MJ WebTech — Get a Free IT Consultation{% endblock %}
+{% block meta_desc %}Contact MJ WebTech Pvt. Ltd. for software development, IT consulting, cloud services or support. Patna, Bihar. 24-hour response guaranteed.{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="container text-center" data-aos="fade-up">
+    <div class="section-badge">We're Here to Help</div>
+    <h1 class="page-hero-title">Contact <span class="text-mj-accent">Us</span></h1>
+    <p class="page-hero-sub">Fill in the form and a real person will respond within 24 hours — guaranteed.</p>
+  </div>
+</section>
+
+<section class="section-pad" id="contact-form-section">
+  <div class="container">
+    <div class="row g-5">
+
+      <!-- LEFT — Info cards -->
+      <div class="col-lg-4" data-aos="fade-right">
+        <h3 class="mb-4">Get In <span class="text-mj-accent">Touch</span></h3>
+        <div class="contact-info-cards">
+          <a href="#map" class="contact-info-item text-decoration-none">
+            <div class="ci-icon ci-primary"><i class="bi bi-geo-alt-fill"></i></div>
+            <div><strong>Our Office</strong><span>{{ company_address }}</span></div>
+          </a>
+          <a href="tel:{{ company_phone }}" class="contact-info-item text-decoration-none">
+            <div class="ci-icon ci-success"><i class="bi bi-telephone-fill"></i></div>
+            <div><strong>Phone / WhatsApp</strong><span>{{ company_phone }}</span></div>
+          </a>
+          <a href="mailto:{{ company_email }}" class="contact-info-item text-decoration-none">
+            <div class="ci-icon ci-warning"><i class="bi bi-envelope-fill"></i></div>
+            <div><strong>Email</strong><span>{{ company_email }}</span></div>
+          </a>
+          <div class="contact-info-item">
+            <div class="ci-icon ci-info"><i class="bi bi-clock-fill"></i></div>
+            <div><strong>Business Hours</strong><span>Mon – Sat: 9:00 AM – 6:00 PM IST</span></div>
+          </div>
+        </div>
+
+        <!-- Response time promise -->
+        <div class="response-promise mt-4">
+          <div class="rp-item"><i class="bi bi-lightning-charge-fill text-warning"></i><span>< 4 hrs — Technical Support</span></div>
+          <div class="rp-item"><i class="bi bi-check-circle-fill text-success"></i><span>< 24 hrs — General Enquiries</span></div>
+          <div class="rp-item"><i class="bi bi-calendar-check text-mj-accent"></i><span>< 48 hrs — Consulting Proposals</span></div>
+        </div>
+
+        <div class="mt-4">
+          <h6 class="mb-3 text-muted">Follow Us</h6>
+          <div class="social-links">
+            <a href="https://linkedin.com"  target="_blank" rel="noopener" class="social-link" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+            <a href="https://twitter.com"   target="_blank" rel="noopener" class="social-link" aria-label="Twitter/X"><i class="bi bi-twitter-x"></i></a>
+            <a href="https://facebook.com"  target="_blank" rel="noopener" class="social-link" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+            <a href="https://instagram.com" target="_blank" rel="noopener" class="social-link" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT — Form -->
+      <div class="col-lg-8" data-aos="fade-left">
+        <div class="contact-form-card">
+          <h3 class="mb-1">Send Us a <span class="text-mj-accent">Message</span></h3>
+          <p class="text-muted mb-4 small">All fields marked <span class="text-danger">*</span> are required.</p>
+
+          <form method="POST" action="{{ url_for('contact.contact') }}" novalidate id="contactForm">
+            {{ form.hidden_tag() }}
+
+            <div class="row g-3">
+              <!-- Name -->
+              <div class="col-md-6">
+                {{ form.name.label(class="form-label") }}<span class="text-danger ms-1">*</span>
+                {{ form.name(class="form-control mj-input" + (" is-invalid" if form.name.errors else ""), placeholder="Your full name") }}
+                {% for err in form.name.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+              </div>
+              <!-- Email -->
+              <div class="col-md-6">
+                {{ form.email.label(class="form-label") }}<span class="text-danger ms-1">*</span>
+                <div class="input-group">
+                  {{ form.email(class="form-control mj-input" + (" is-invalid" if form.email.errors else ""), placeholder="you@company.com", id="contactEmail") }}
+                  <button type="button" class="btn btn-outline-secondary" id="sendOtpBtn">
+                    <i class="bi bi-envelope me-1"></i>Verify
+                  </button>
+                </div>
+                {% for err in form.email.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+                <div class="form-text text-muted">Verify email before sending</div>
+              </div>
+              <!-- Company -->
+              <div class="col-md-6">
+                {{ form.company.label(class="form-label") }}
+                {{ form.company(class="form-control mj-input" + (" is-invalid" if form.company.errors else ""), placeholder="Company or organization") }}
+                {% for err in form.company.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+              </div>
+              <!-- OTP Verification -->
+              <div class="col-12 otp-verification-section" id="otpSection" style="display: none;">
+                <div class="alert alert-info">
+                  <div class="row align-items-center">
+                    <div class="col-md-8">
+                      <label class="form-label mb-2">Enter OTP sent to your email</label>
+                      <div class="input-group">
+                        <input type="text" class="form-control" id="contactOtp" 
+                               placeholder="Enter 6-digit OTP" maxlength="6">
+                        <button type="button" class="btn btn-primary" id="verifyOtpBtn">Verify</button>
+                      </div>
+                    </div>
+                    <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                      <span id="otpTimer" class="text-warning small"></span>
+                      <button type="button" class="btn btn-link btn-sm d-block" id="resendOtpBtn" disabled>
+                        Resend OTP
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Phone -->
+              <div class="col-md-6">
+                {{ form.phone.label(class="form-label") }}
+                {{ form.phone(class="form-control mj-input" + (" is-invalid" if form.phone.errors else ""), placeholder="+91 98765 43210") }}
+                {% for err in form.phone.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+              </div>
+              <!-- Subject -->
+              <div class="col-md-6">
+                {{ form.subject.label(class="form-label") }}<span class="text-danger ms-1">*</span>
+                {{ form.subject(class="form-select mj-input" + (" is-invalid" if form.subject.errors else "")) }}
+                {% for err in form.subject.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+              </div>
+              <!-- Message -->
+              <div class="col-12">
+                {{ form.message.label(class="form-label") }}<span class="text-danger ms-1">*</span>
+                {{ form.message(class="form-control mj-input" + (" is-invalid" if form.message.errors else ""), rows=5, placeholder="Tell us about your project or requirement…") }}
+                {% for err in form.message.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
+                <div class="form-text text-muted">Minimum 10 characters. Be as detailed as possible.</div>
+              </div>
+              <!-- Privacy -->
+              <div class="col-12">
+                <div class="form-check">
+                  {{ form.privacy(class="form-check-input" + (" is-invalid" if form.privacy.errors else ""), id="privacyCheck") }}
+                  <label class="form-check-label small text-muted" for="privacyCheck">
+                    I agree to MJ WebTech's privacy policy and consent to being contacted regarding my enquiry.
+                  </label>
+                  {% for err in form.privacy.errors %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
+                </div>
+              </div>
+              {% if turnstile_site_key %}
+              <div class="col-12">
+                <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-response-field="cf-turnstile-response"></div>
+              </div>
+              {% endif %}
+              <!-- Submit -->
+              <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-mj-primary btn-lg w-100" id="contactSubmitBtn">
+                  <i class="bi bi-send me-2"></i>Send Message
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Google Maps -->
+<section class="map-section" id="map">
+  <div class="container">
+    <div class="map-wrapper" data-aos="fade-up">
+      <iframe
+        src="{{ map_embed }}"
+        width="100%" height="420" style="border:0;" allowfullscreen=""
+        loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+        title="MJ WebTech Office Location — Patna, Bihar">
+      </iframe>
+      <div class="map-overlay-card">
+        <i class="bi bi-geo-alt-fill text-mj-accent fs-4 mb-2 d-block"></i>
+        <strong>MJ WebTech Pvt. Ltd.</strong>
+        <p class="mb-0 small text-muted">{{ company_address }}</p>
+        <a href="https://maps.google.com" target="_blank" rel="noopener" class="btn btn-mj-outline btn-sm mt-2">
+          <i class="bi bi-map me-1"></i>Get Directions
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+{% if turnstile_site_key %}
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+{% endif %}
+<script>
+let emailVerified = false;
+let otpTimerInterval = null;
+
+(function() {
+  const sendOtpBtn = document.getElementById('sendOtpBtn');
+  const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+  const resendOtpBtn = document.getElementById('resendOtpBtn');
+  const otpSection = document.getElementById('otpSection');
+  const otpTimer = document.getElementById('otpTimer');
+  const emailInput = document.getElementById('contactEmail');
+  const otpInput = document.getElementById('contactOtp');
+  const form = document.getElementById('contactForm');
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function setButtonLoading(button, loading, text) {
+    if (!button) return;
+    button.disabled = loading;
+    button.innerHTML = loading ? '<span class="spinner-border spinner-border-sm"></span> ' + text : text;
+  }
+
+  function sendOtp() {
+    const email = emailInput?.value.trim();
+    if (!email || !emailPattern.test(email)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+
+    setButtonLoading(sendOtpBtn, true, 'Sending...');
+
+    fetch('/contact/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email })
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          otpSection.style.display = 'block';
+          setButtonLoading(sendOtpBtn, false, 'Sent ✓');
+          startOtpTimer(data.expires_in || 600);
+          alert(data.message);
+        } else {
+          alert(data.message);
+          setButtonLoading(sendOtpBtn, false, '<i class="bi bi-envelope me-1"></i>Verify');
+        }
+      })
+      .catch(() => {
+        alert('An error occurred. Please try again.');
+        setButtonLoading(sendOtpBtn, false, '<i class="bi bi-envelope me-1"></i>Verify');
+      });
+  }
+
+  function verifyOtp() {
+    const email = emailInput?.value.trim();
+    const otp = otpInput?.value.trim();
+
+    if (!otp || otp.length !== 6) {
+      alert('Please enter the 6-digit OTP.');
+      return;
+    }
+
+    setButtonLoading(verifyOtpBtn, true, 'Verifying...');
+
+    fetch('/contact/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, otp: otp })
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          emailVerified = true;
+          otpSection.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>Email verified! You can now send your message.</div>';
+          if (sendOtpBtn) sendOtpBtn.style.display = 'none';
+        } else {
+          alert(data.message);
+          setButtonLoading(verifyOtpBtn, false, 'Verify');
+        }
+      })
+      .catch(() => {
+        alert('An error occurred. Please try again.');
+        setButtonLoading(verifyOtpBtn, false, 'Verify');
+      });
+  }
+
+  function resendOtp() {
+    const email = emailInput?.value.trim();
+    if (!email || !emailPattern.test(email)) {
+      alert('Please enter a valid email address first.');
+      return;
+    }
+
+    setButtonLoading(resendOtpBtn, true, 'Resending...');
+
+    fetch('/contact/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email })
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          startOtpTimer(data.expires_in || 600);
+          alert(data.message);
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(() => {
+        alert('An error occurred. Please try again.');
+      })
+      .finally(() => {
+        setButtonLoading(resendOtpBtn, false, 'Resend OTP');
+      });
+  }
+
+  function startOtpTimer(seconds) {
+    clearInterval(otpTimerInterval);
+    if (resendOtpBtn) resendOtpBtn.disabled = true;
+
+    otpTimerInterval = setInterval(() => {
+      if (seconds <= 0) {
+        clearInterval(otpTimerInterval);
+        if (otpTimer) otpTimer.textContent = '';
+        if (resendOtpBtn) resendOtpBtn.disabled = false;
+        return;
+      }
+
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      if (otpTimer) otpTimer.textContent = `Resend in ${mins}:${secs.toString().padStart(2, '0')}`;
+      seconds -= 1;
+    }, 1000);
+  }
+
+  sendOtpBtn?.addEventListener('click', sendOtp);
+  verifyOtpBtn?.addEventListener('click', verifyOtp);
+  resendOtpBtn?.addEventListener('click', resendOtp);
+
+  form?.addEventListener('submit', function(e) {
+    if (!emailVerified) {
+      e.preventDefault();
+      alert('Please verify your email with OTP before sending.');
+    }
+  });
+})();
+</script>
+{% endblock %}
