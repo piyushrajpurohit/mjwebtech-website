@@ -13,6 +13,9 @@ import multiprocessing
 # Bind to 0.0.0.0 and port from environment (Render sets PORT automatically)
 bind = f"0.0.0.0:{os.environ.get('PORT', '5000')}"
 
+# Canonical WSGI entry point (manage.py exposes application = create_app(...))
+wsgi_app = "manage:application"
+
 # Number of worker processes
 # Render provides 1 CPU, so use 2-4 workers
 workers = int(os.environ.get("WEB_CONCURRENCY", 3))
