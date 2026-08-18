@@ -100,7 +100,13 @@
       {% for member in team %}
       <div class="col-sm-6 col-lg-3" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 80 }}">
         <div class="team-card">
-          <div class="team-avatar"><i class="bi {{ member.icon }}"></i></div>
+          <div class="team-avatar">
+            {% if member.photo %}
+            <img src="{{ url_for('static', filename=member.photo) }}" alt="{{ member.name }}, {{ member.role }} of MJ WebTech">
+            {% else %}
+            <i class="bi {{ member.icon }}"></i>
+            {% endif %}
+          </div>
           <h5>{{ member.name }}</h5>
           <span>{{ member.role }}</span>
           <div class="team-socials">

@@ -23,8 +23,8 @@ def index():
 @main_bp.route("/about")
 def about():
     team = [
-        {"name": "Mahima Kumari",   "role": "Founder & CEO",        "icon": "bi-person-badge"},
-        {"name": "Geeta",          "role": "Founder & CEO",        "icon": "bi-person-badge"},
+        {"name": "Mahima Kumari", "role": "Founder & CEO", "photo": "images/leadership/mahima-kumari.png"},
+        {"name": "Geeta Devi",    "role": "Founder & CEO", "photo": "images/leadership/geeta-devi.png"},
     ]
     return render_template("about.html", team=team)
 
