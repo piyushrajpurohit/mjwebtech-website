@@ -3,13 +3,22 @@ email_service.py — MJ WebTech Email Service
 Handles OTP generation, verification, and transactional emails.
 """
 
+import json
 import secrets
+import smtplib
+import socket
 import string
+import urllib.error
+import urllib.request
 from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import formataddr, parseaddr
 from typing import Optional
 
 from flask import current_app
-from flask_mail import Message
+
+BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
 
 
 def generate_otp(length: int = 6) -> str:
@@ -24,11 +33,10 @@ def generate_token(length: int = 32) -> str:
 
 
 def mail_sender():
-    """From address for Flask-Mail.
+    """From address as (name, email).
 
-    Brevo authenticates with MAIL_USERNAME (often xxx@smtp-brevo.com) but
-    rejects that value as the From address. Always send as the verified
-    MAIL_DEFAULT_SENDER instead.
+    Brevo SMTP login (xxx@smtp-brevo.com) is an auth identity, not a sender.
+    Always send as the verified MAIL_DEFAULT_SENDER instead.
     """
     configured = current_app.config.get("MAIL_DEFAULT_SENDER") or "noreply@mjwebtech.in"
     company = current_app.config.get("COMPANY_NAME", "MJ WebTech Pvt. Ltd.")
@@ -38,25 +46,38 @@ def mail_sender():
     return sender if "<" in sender and ">" in sender else (company, sender)
 
 
-def send_email(subject: str, recipients: list, body: str, html: str = None) -> bool:
-    """
-    Send an email via Flask-Mail (Brevo SMTP).
-    Returns True if successful, False otherwise.
-    """
-    username = (current_app.config.get("MAIL_USERNAME") or "").strip()
-    password = (current_app.config.get("MAIL_PASSWORD") or "").strip()
-    server = current_app.config.get("MAIL_SERVER", "")
-    port = current_app.config.get("MAIL_PORT", "")
+def sender_name_email() -> tuple[str, str]:
     sender = mail_sender()
-    sender_email = sender[1] if isinstance(sender, tuple) else str(sender)
+    company = current_app.config.get("COMPANY_NAME", "MJ WebTech Pvt. Ltd.")
+    if isinstance(sender, tuple):
+        name, email = sender[0], sender[1]
+    else:
+        name, email = parseaddr(str(sender))
+        if not email:
+            email = str(sender).strip()
+            name = company
+    return (name or company, email)
 
-    if not username or not password:
-        current_app.logger.error(
-            "Email not sent: MAIL_USERNAME or MAIL_PASSWORD is missing. "
-            "Set the Brevo SMTP login and SMTP key on Render."
-        )
+
+def _brevo_api_key() -> str:
+    key = (current_app.config.get("BREVO_API_KEY") or "").strip()
+    if key:
+        return key
+    password = (current_app.config.get("MAIL_PASSWORD") or "").strip()
+    # Brevo v3 API keys start with this prefix; SMTP keys do not.
+    if password.startswith("xkeysib-"):
+        return password
+    return ""
+
+
+def send_email(subject: str, recipients: list, body: str, html: str = None) -> bool:
+    """Send email via Brevo HTTPS API, with timed SMTP only as a local fallback."""
+    recipients = [str(r).strip() for r in (recipients or []) if str(r).strip()]
+    if not recipients:
+        current_app.logger.error("Email not sent: no recipients")
         return False
 
+    sender_name, sender_email = sender_name_email()
     if "@smtp-brevo.com" in sender_email.lower() or sender_email.lower() == "smtp-relay.brevo.com":
         current_app.logger.error(
             "MAIL_DEFAULT_SENDER must be a verified sender in Brevo "
@@ -64,29 +85,127 @@ def send_email(subject: str, recipients: list, body: str, html: str = None) -> b
         )
         return False
 
-    try:
-        from app import mail
-
-        msg = Message(
-            subject=subject,
-            sender=sender,
-            recipients=recipients,
-            body=body,
-            html=html,
+    api_key = _brevo_api_key()
+    if api_key:
+        return _send_via_brevo_api(
+            api_key, sender_name, sender_email, recipients, subject, body, html
         )
-        mail.send(msg)
-        current_app.logger.info("Email sent successfully to %s via %s:%s", recipients, server, port)
-        return True
-    except Exception as e:
+
+    username = (current_app.config.get("MAIL_USERNAME") or "").strip()
+    password = (current_app.config.get("MAIL_PASSWORD") or "").strip()
+    if not username or not password:
         current_app.logger.error(
-            "Email sending failed via %s:%s login=%s from=%s: %s",
+            "Email not sent: set BREVO_API_KEY on Render. SMTP ports 587/465 "
+            "are blocked or delayed on Render, so OTP requests hang and mail "
+            "never leaves the server."
+        )
+        return False
+
+    current_app.logger.warning(
+        "BREVO_API_KEY is not set; using SMTP with a short timeout. "
+        "This often fails on Render — add a Brevo API key for production."
+    )
+    return _send_via_smtp(sender_name, sender_email, recipients, subject, body, html)
+
+
+def _send_via_brevo_api(
+    api_key: str,
+    sender_name: str,
+    sender_email: str,
+    recipients: list,
+    subject: str,
+    body: str,
+    html: str | None,
+) -> bool:
+    payload = {
+        "sender": {"name": sender_name, "email": sender_email},
+        "to": [{"email": email} for email in recipients],
+        "subject": subject,
+        "textContent": body or "",
+        "htmlContent": html or f"<pre>{body or ''}</pre>",
+    }
+    request = urllib.request.Request(
+        BREVO_API_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "accept": "application/json",
+            "api-key": api_key,
+            "content-type": "application/json",
+        },
+        method="POST",
+    )
+    timeout = current_app.config.get("MAIL_TIMEOUT", 8)
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            status = getattr(response, "status", 200)
+            current_app.logger.info(
+                "Brevo API accepted email to %s (HTTP %s)", recipients, status
+            )
+            return 200 <= int(status) < 300
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        current_app.logger.error("Brevo API HTTP %s from=%s: %s", exc.code, sender_email, detail)
+        return False
+    except Exception as exc:
+        current_app.logger.error("Brevo API request failed: %s", exc)
+        return False
+
+
+def _send_via_smtp(
+    sender_name: str,
+    sender_email: str,
+    recipients: list,
+    subject: str,
+    body: str,
+    html: str | None,
+) -> bool:
+    username = (current_app.config.get("MAIL_USERNAME") or "").strip()
+    password = (current_app.config.get("MAIL_PASSWORD") or "").strip()
+    server = current_app.config.get("MAIL_SERVER", "smtp-relay.brevo.com")
+    port = int(current_app.config.get("MAIL_PORT", 587))
+    use_tls = current_app.config.get("MAIL_USE_TLS", True)
+    use_ssl = current_app.config.get("MAIL_USE_SSL", False)
+    timeout = int(current_app.config.get("MAIL_TIMEOUT", 8))
+
+    message = MIMEMultipart("alternative")
+    message["Subject"] = subject
+    message["From"] = formataddr((sender_name, sender_email))
+    message["To"] = ", ".join(recipients)
+    if body:
+        message.attach(MIMEText(body, "plain", "utf-8"))
+    if html:
+        message.attach(MIMEText(html, "html", "utf-8"))
+
+    smtp = None
+    try:
+        if use_ssl:
+            smtp = smtplib.SMTP_SSL(server, port, timeout=timeout)
+        else:
+            smtp = smtplib.SMTP(server, port, timeout=timeout)
+            smtp.ehlo()
+            if use_tls:
+                smtp.starttls()
+                smtp.ehlo()
+        smtp.login(username, password)
+        smtp.sendmail(sender_email, recipients, message.as_string())
+        current_app.logger.info("Email sent via SMTP %s:%s to %s", server, port, recipients)
+        return True
+    except (smtplib.SMTPException, socket.timeout, TimeoutError, OSError) as exc:
+        current_app.logger.error(
+            "SMTP send failed via %s:%s login=%s from=%s: %s",
             server,
             port,
             username,
             sender_email,
-            e,
+            exc,
         )
         return False
+    finally:
+        if smtp is not None:
+            try:
+                smtp.quit()
+            except Exception:
+                pass
 
 
 def otp_send_response(success: bool, otp: str, resent: bool = False):

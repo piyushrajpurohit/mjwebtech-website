@@ -53,13 +53,9 @@ Set the following in Render dashboard (**not** in `.env`):
 | `FLASK_ENV` | `production` | Static |
 | `SECRET_KEY` | (generate below) | Generate & paste |
 | `CORS_ORIGINS` | `https://MY_DOMAIN,https://www.MY_DOMAIN` | Your domain |
-| `MAIL_SERVER` | `smtp-relay.brevo.com` | Static |
-| `MAIL_PORT` | `587` | Static |
-| `MAIL_USE_TLS` | `true` | Static |
-| `MAIL_USE_SSL` | `false` | Static |
-| `MAIL_USERNAME` | (Brevo SMTP login) | Often `xxx@smtp-brevo.com` |
-| `MAIL_PASSWORD` | (Brevo SMTP key) | SMTP key, not API key |
+| `BREVO_API_KEY` | (API key) | Brevo SMTP & API → API Keys |
 | `MAIL_DEFAULT_SENDER` | `noreply@mjwebtech.in` | Must be verified in Brevo |
+| `MAIL_TIMEOUT` | `8` | Seconds; avoids hung OTP requests |
 | `CONTACT_EMAIL` | `info@mjwebtech.in` | Static |
 | `TURNSTILE_SITE_KEY` | (optional CAPTCHA key) | Cloudflare Turnstile |
 | `TURNSTILE_SECRET_KEY` | (optional CAPTCHA secret) | Cloudflare Turnstile |
@@ -72,12 +68,12 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 # Copy output and paste into Render dashboard
 ```
 
-**Obtain Brevo SMTP credentials:**
-1. In Brevo, open **Settings → SMTP & API**
-2. Copy **SMTP login** (often `xxxxxxxx@smtp-brevo.com`). Do not use `smtp-relay.brevo.com` as the username
-3. Create an **SMTP key** and paste it into `MAIL_PASSWORD` on Render. Do not use an API key or the account password
-4. Under **Senders, domains & IPs**, verify the address in `MAIL_DEFAULT_SENDER` (for example `noreply@mjwebtech.in`)
-5. Authenticate `mjwebtech.in` (SPF/DKIM) so OTP mail is less likely to land in spam
+**Obtain a Brevo API key (required on Render):**
+1. In Brevo, open **Settings → SMTP & API → API Keys** and create a key. This is not the SMTP key
+2. Paste it into `BREVO_API_KEY` on Render
+3. Under **Senders, domains & IPs**, verify `MAIL_DEFAULT_SENDER` (for example `noreply@mjwebtech.in`)
+4. Authenticate `mjwebtech.in` (SPF/DKIM) so OTP mail is less likely to land in spam
+5. Render blocks or delays SMTP ports 587/465, so OTP will hang and never send if you only set SMTP credentials
 
 ### Step 3: Create PostgreSQL Database
 
@@ -116,7 +112,7 @@ curl https://mjwebtech-backend.onrender.com/api/health
 | Build fails: missing dependencies | Ensure all packages in `requirements.txt` |
 | 502 Bad Gateway | Check logs; likely database URL issue |
 | CORS errors on frontend calls | Verify `CORS_ORIGINS` env var includes your frontend domain |
-| Email not sending | Verify Brevo SMTP login, SMTP key, and a verified sender |
+| Email not sending | Set `BREVO_API_KEY` on Render; verify the sender in Brevo |
 
 ---
 
@@ -296,13 +292,9 @@ flask db upgrade  # Apply any pending migrations
 
 | Variable | Purpose | Where to Get |
 |----------|---------|--------------|
-| `MAIL_SERVER` | SMTP host | `smtp-relay.brevo.com` |
-| `MAIL_PORT` | SMTP port | `587` |
-| `MAIL_USE_TLS` | Enable STARTTLS | `true` |
-| `MAIL_USE_SSL` | SSL (port 465 only) | `false` |
-| `MAIL_USERNAME` | Brevo SMTP login | `xxx@smtp-brevo.com` |
-| `MAIL_PASSWORD` | SMTP key | [SMTP keys](https://app.brevo.com/settings/keys/smtp) |
+| `BREVO_API_KEY` | Transactional API key | [API keys](https://app.brevo.com/settings/keys/api) |
 | `MAIL_DEFAULT_SENDER` | From address | Verified sender, e.g. `noreply@mjwebtech.in` |
+| `MAIL_TIMEOUT` | Send timeout (seconds) | `8` |
 | `CONTACT_EMAIL` | Admin inbox | `info@mjwebtech.in` |
 
 ### Optional: Cloudflare Turnstile (CAPTCHA)
@@ -320,7 +312,7 @@ flask db upgrade  # Apply any pending migrations
 - [ ] Repository pushed to GitHub
 - [ ] `.env` file NOT committed (check `.gitignore`)
 - [ ] `SECRET_KEY` generated (32+ characters)
-- [ ] Brevo SMTP login and SMTP key set on Render
+- [ ] `BREVO_API_KEY` set on Render (API key, not SMTP key)
 - [ ] `MAIL_DEFAULT_SENDER` verified in Brevo
 - [ ] GoDaddy domain registered
 - [ ] Domain registered with registrar (GoDaddy)
@@ -378,8 +370,7 @@ flask db upgrade  # Apply any pending migrations
 
 ### Email Not Sending
 **Error:** Contact form submits but no email received
-- **Fix:** Verify Brevo SMTP login (`xxx@smtp-brevo.com`) and SMTP key (not API key)
-- Check `MAIL_USERNAME`, `MAIL_PASSWORD`, and `MAIL_SERVER=smtp-relay.brevo.com` in Render
+- **Fix:** Set `BREVO_API_KEY` (API key from Brevo, not the SMTP key). SMTP on Render hangs
 - Confirm `MAIL_DEFAULT_SENDER` is a verified sender in Brevo
 - Check spam folder and Brevo transactional logs
 
@@ -434,7 +425,7 @@ flask db upgrade  # Apply any pending migrations
 
 ⚠️ **Manual Steps:**
 - Change `SECRET_KEY` from default before first deploy
-- Keep the Brevo SMTP key only in Render, never in code
+- Keep the Brevo API key only in Render, never in code
 - Rotate secrets periodically
 - Monitor error logs for attacks
 

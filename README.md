@@ -88,10 +88,8 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for step-by-step instructions.
 - `DATABASE_URL`: PostgreSQL connection string (Render: auto-provided)
 - `CORS_ORIGINS`: Frontend domains (e.g., `https://my-domain.com`)
 
-**Email (Brevo SMTP):**
-- `MAIL_SERVER`: `smtp-relay.brevo.com`
-- `MAIL_USERNAME`: Brevo SMTP login (often `xxx@smtp-brevo.com`)
-- `MAIL_PASSWORD`: Brevo SMTP key (not an API key)
+**Email (Brevo HTTPS API):**
+- `BREVO_API_KEY`: Transactional API key (not an SMTP key)
 - `MAIL_DEFAULT_SENDER`: A sender verified in Brevo
 
 **Optional (CAPTCHA):**
@@ -181,11 +179,7 @@ pip install --upgrade pip && pip install -r requirements.txt && flask db upgrade
 Email will not send in development unless `MAIL_PASSWORD` is set. To test:
 ```bash
 # .env
-MAIL_SERVER=smtp-relay.brevo.com
-MAIL_PORT=587
-MAIL_USE_TLS=true
-MAIL_USERNAME=xxxxxxxx@smtp-brevo.com
-MAIL_PASSWORD=your-brevo-smtp-key
+BREVO_API_KEY=your-brevo-api-key
 MAIL_DEFAULT_SENDER=noreply@mjwebtech.in
 ```
 
@@ -239,7 +233,7 @@ FLASK_ENV=production python manage.py
 - ✅ Contact form confirmations
 - ✅ OTP delivery
 - ✅ Admin notifications
-- ✅ Support for Brevo SMTP
+- ✅ Support for Brevo transactional API
 
 ---
 
@@ -257,7 +251,7 @@ FLASK_ENV=production python manage.py
 
 ⚠️ **Before Production:**
 - Change `SECRET_KEY` from default
-- Use a Brevo SMTP key for `MAIL_PASSWORD` (not an API key)
+- Use a Brevo API key for `BREVO_API_KEY` (not an SMTP key)
 - Enable CORS only for your domain
 - Monitor logs for attacks
 
@@ -271,7 +265,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md#troubleshooting) for detailed troubleshooting 
 - **Build fails on Netlify**: Check `requirements.txt`, all Python packages must be listed
 - **API not responding**: Check Render logs, verify `DATABASE_URL` and `SECRET_KEY`
 - **CORS errors**: Verify `CORS_ORIGINS` includes your domain
-- **Email not sending**: Check Brevo SMTP login, SMTP key, `MAIL_SERVER=smtp-relay.brevo.com`, and a verified sender
+- **Email not sending**: Set `BREVO_API_KEY` on Render and use a verified sender. SMTP ports hang on Render
 
 ---
 

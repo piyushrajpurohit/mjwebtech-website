@@ -94,15 +94,17 @@ class Config:
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     }
 
-    # ── Email Configuration (Brevo SMTP) ──
-    # MAIL_USERNAME must be the SMTP login from Brevo (often xxx@smtp-brevo.com),
-    # not smtp-relay.brevo.com and not necessarily the account email.
-    # MAIL_PASSWORD must be an SMTP key, not a Brevo API key or account password.
+    # ── Email Configuration (Brevo) ──
+    # Production on Render should use BREVO_API_KEY (HTTPS). Outbound SMTP
+    # ports 25/465/587 are blocked or delayed on many Render plans, which
+    # hangs OTP requests and never delivers the message.
     # MAIL_DEFAULT_SENDER must be a sender verified in Brevo (Senders & IP).
+    BREVO_API_KEY = (os.environ.get("BREVO_API_KEY") or "").strip()
     MAIL_SERVER   = os.environ.get("MAIL_SERVER", "smtp-relay.brevo.com")
     MAIL_PORT     = int(os.environ.get("MAIL_PORT", 587))
     MAIL_USE_TLS  = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"
     MAIL_USE_SSL  = os.environ.get("MAIL_USE_SSL", "false").lower() == "true"
+    MAIL_TIMEOUT  = int(os.environ.get("MAIL_TIMEOUT", 8))
     MAIL_USERNAME = (os.environ.get("MAIL_USERNAME") or "").strip()
     MAIL_PASSWORD = (os.environ.get("MAIL_PASSWORD") or "").strip()
     MAIL_DEFAULT_SENDER = (os.environ.get("MAIL_DEFAULT_SENDER") or "noreply@mjwebtech.in").strip()

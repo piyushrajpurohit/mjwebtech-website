@@ -9,7 +9,7 @@ from flask import (Blueprint, render_template, request,
 from app import csrf, db, limiter
 from app.models import Contact, ContactActionLog, OTPVerification
 from app.forms  import ContactForm
-from app.email_service import mail_sender, otp_send_response, send_otp_email, send_confirmation_email
+from app.email_service import otp_send_response, send_email, send_otp_email, send_confirmation_email
 
 contact_bp = Blueprint("contact", __name__)
 
@@ -63,25 +63,19 @@ def _record_contact_action(contact: Contact, action: str, performed_by: str, not
 
 
 def _send_notification(contact: Contact):
-    """Send admin email — fails silently if SMTP not configured."""
-    try:
-        from flask_mail import Message
-        from app import mail
-        msg = Message(
-            subject=f"[MJWebTech] New Contact: {contact.subject}",
-            sender=mail_sender(),
-            recipients=[current_app.config["CONTACT_EMAIL"]],
-            body=(
-                f"Name:    {contact.name}\n"
-                f"Email:   {contact.email}\n"
-                f"Phone:   {contact.phone or 'N/A'}\n"
-                f"Subject: {contact.subject}\n\n"
-                f"Message:\n{contact.message}"
-            ),
-        )
-        mail.send(msg)
-    except Exception as exc:
-        current_app.logger.warning(f"Email failed: {exc}")
+    """Send admin email — fails silently if mail is not configured."""
+    body = (
+        f"Name:    {contact.name}\n"
+        f"Email:   {contact.email}\n"
+        f"Phone:   {contact.phone or 'N/A'}\n"
+        f"Subject: {contact.subject}\n\n"
+        f"Message:\n{contact.message}"
+    )
+    send_email(
+        subject=f"[MJWebTech] New Contact: {contact.subject}",
+        recipients=[current_app.config["CONTACT_EMAIL"]],
+        body=body,
+    )
 
 
 # ── OTP Routes for Contact Form ──

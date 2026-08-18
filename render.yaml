@@ -5,8 +5,9 @@
 #   CORS_ORIGINS          real production frontend origin(s), comma-separated
 #                         example: https://your-domain.com,https://www.your-domain.com
 #                         Do NOT use https://MY_DOMAIN
-#   MAIL_USERNAME         Brevo SMTP login (often xxx@smtp-brevo.com), not the relay host
-#   MAIL_PASSWORD         Brevo SMTP key (not an API key and not the account password)
+#   BREVO_API_KEY         Brevo transactional API key (Settings → SMTP & API → API Keys)
+#                         Required on Render: outbound SMTP ports are blocked/delayed
+#   MAIL_DEFAULT_SENDER   sender verified in Brevo (Senders, domains & IPs)
 #   TURNSTILE_SITE_KEY    optional Cloudflare Turnstile site key (leave blank to disable)
 #   TURNSTILE_SECRET_KEY  optional Cloudflare Turnstile secret (leave blank to disable)
 #
@@ -46,6 +47,8 @@ services:
           property: connectionString
       - key: CORS_ORIGINS
         sync: false
+      - key: BREVO_API_KEY
+        sync: false
       - key: MAIL_SERVER
         value: smtp-relay.brevo.com
       - key: MAIL_PORT
@@ -54,6 +57,8 @@ services:
         value: "true"
       - key: MAIL_USE_SSL
         value: "false"
+      - key: MAIL_TIMEOUT
+        value: "8"
       - key: MAIL_USERNAME
         sync: false
       - key: MAIL_PASSWORD
