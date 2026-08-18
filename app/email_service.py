@@ -23,26 +23,108 @@ def generate_token(length: int = 32) -> str:
     return secrets.token_urlsafe(length)
 
 
+def mail_sender():
+    """From address for Flask-Mail.
+
+    Brevo authenticates with MAIL_USERNAME (often xxx@smtp-brevo.com) but
+    rejects that value as the From address. Always send as the verified
+    MAIL_DEFAULT_SENDER instead.
+    """
+    configured = current_app.config.get("MAIL_DEFAULT_SENDER") or "noreply@mjwebtech.in"
+    company = current_app.config.get("COMPANY_NAME", "MJ WebTech Pvt. Ltd.")
+    if isinstance(configured, (tuple, list)) and len(configured) == 2:
+        return (configured[0], configured[1])
+    sender = str(configured).strip()
+    return sender if "<" in sender and ">" in sender else (company, sender)
+
+
 def send_email(subject: str, recipients: list, body: str, html: str = None) -> bool:
     """
-    Send an email via Flask-Mail.
+    Send an email via Flask-Mail (Brevo SMTP).
     Returns True if successful, False otherwise.
     """
+    username = (current_app.config.get("MAIL_USERNAME") or "").strip()
+    password = (current_app.config.get("MAIL_PASSWORD") or "").strip()
+    server = current_app.config.get("MAIL_SERVER", "")
+    port = current_app.config.get("MAIL_PORT", "")
+    sender = mail_sender()
+    sender_email = sender[1] if isinstance(sender, tuple) else str(sender)
+
+    if not username or not password:
+        current_app.logger.error(
+            "Email not sent: MAIL_USERNAME or MAIL_PASSWORD is missing. "
+            "Set the Brevo SMTP login and SMTP key on Render."
+        )
+        return False
+
+    if "@smtp-brevo.com" in sender_email.lower() or sender_email.lower() == "smtp-relay.brevo.com":
+        current_app.logger.error(
+            "MAIL_DEFAULT_SENDER must be a verified sender in Brevo "
+            "(for example noreply@mjwebtech.in), not the SMTP login."
+        )
+        return False
+
     try:
         from app import mail
-        
+
         msg = Message(
             subject=subject,
+            sender=sender,
             recipients=recipients,
             body=body,
-            html=html
+            html=html,
         )
         mail.send(msg)
-        current_app.logger.info(f"Email sent successfully to {recipients}")
+        current_app.logger.info("Email sent successfully to %s via %s:%s", recipients, server, port)
         return True
     except Exception as e:
-        current_app.logger.error(f"Email sending failed: {e}")
+        current_app.logger.error(
+            "Email sending failed via %s:%s login=%s from=%s: %s",
+            server,
+            port,
+            username,
+            sender_email,
+            e,
+        )
         return False
+
+
+def otp_send_response(success: bool, otp: str, resent: bool = False):
+    """JSON payload for OTP send endpoints. Never return the OTP in production."""
+    from flask import jsonify
+
+    if success:
+        message = (
+            "New OTP sent! Check your email."
+            if resent
+            else "OTP sent! Check your email for the verification code."
+        )
+        return jsonify({
+            "success": True,
+            "message": message,
+            "expires_in": 600,
+        }), 200
+
+    current_app.logger.warning("OTP email was not delivered")
+    if current_app.debug:
+        current_app.logger.warning("DEBUG OTP (not emailed): %s", otp)
+        return jsonify({
+            "success": True,
+            "message": (
+                "OTP generated successfully. For local development, use the "
+                "code from the server logs if email delivery is unavailable."
+            ),
+            "expires_in": 600,
+            "otp": otp,
+        }), 200
+
+    return jsonify({
+        "success": False,
+        "message": (
+            "We could not send the verification email. Please try again in a "
+            "few minutes, and check that the address is correct."
+        ),
+    }), 503
 
 
 def send_otp_email(email: str, otp: str, purpose: str = "verification") -> bool:
@@ -58,7 +140,7 @@ def send_otp_email(email: str, otp: str, purpose: str = "verification") -> bool:
         bool: True if email sent successfully
     """
     company_name = current_app.config.get("COMPANY_NAME", "MJ WebTech Pvt. Ltd.")
-    company_email = current_app.config.get("MAIL_DEFAULT_SENDER", "noreply@mjwebtech.com")
+    company_email = current_app.config.get("MAIL_DEFAULT_SENDER", "noreply@mjwebtech.in")
     
     subject = f"[{company_name}] Your OTP for {purpose.replace('_', ' ').title()}"
     
@@ -139,7 +221,7 @@ def send_confirmation_email(
         bool: True if email sent successfully
     """
     company_name = current_app.config.get("COMPANY_NAME", "MJ WebTech Pvt. Ltd.")
-    company_website = current_app.config.get("COMPANY_WEBSITE", "https://mjwebtech.com")
+    company_website = current_app.config.get("COMPANY_WEBSITE", "https://mjwebtech.in")
     company_phone = current_app.config.get("COMPANY_PHONE", "+91-98765-43210")
     
     subject = f"[{company_name}] {subject_line}"
@@ -234,7 +316,7 @@ def _get_application_confirmation_html(company_name: str, name: str, details: st
             
             <p style="color: #64748b;">If you have any questions, feel free to reach out to us.</p>
             
-            <a href="https://mjwebtech.com/careers" class="btn">View Open Positions</a>
+            <a href="https://mjwebtech.in/careers" class="btn">View Open Positions</a>
         </div>
         <div class="footer">
             <p>&copy; {datetime.now().year} {company_name}. All rights reserved.</p>
@@ -276,7 +358,7 @@ def _get_contact_confirmation_html(company_name: str, name: str, message: str) -
                 <p style="color: #64748b; margin-top: 10px;">{message[:200]}...</p>
             </div>
             
-            <p style="color: #64748b;">In the meantime, you can learn more about our services at <a href="https://mjwebtech.com/services">mjwebtech.com/services</a></p>
+            <p style="color: #64748b;">In the meantime, you can learn more about our services at <a href="https://mjwebtech.in/services">mjwebtech.in/services</a></p>
         </div>
         <div class="footer">
             <p>&copy; {datetime.now().year} {company_name}. All rights reserved.</p>
@@ -314,7 +396,7 @@ def _get_general_confirmation_html(company_name: str, name: str, message: str) -
             <p style="color: #64748b;">We appreciate your interest in {company_name}.</p>
         </div>
         <div class="footer">
-            <p>&copy; {datetime.now().year()} {company_name}. All rights reserved.</p>
+            <p>&copy; {datetime.now().year} {company_name}. All rights reserved.</p>
         </div>
     </div>
 </body>

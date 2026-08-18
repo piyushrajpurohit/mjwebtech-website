@@ -88,10 +88,11 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for step-by-step instructions.
 - `DATABASE_URL`: PostgreSQL connection string (Render: auto-provided)
 - `CORS_ORIGINS`: Frontend domains (e.g., `https://my-domain.com`)
 
-**Email (Gmail SMTP):**
-- `MAIL_SERVER`: `smtp.gmail.com`
-- `MAIL_USERNAME`: Your Gmail address
-- `MAIL_PASSWORD`: Gmail app password (not regular password)
+**Email (Brevo SMTP):**
+- `MAIL_SERVER`: `smtp-relay.brevo.com`
+- `MAIL_USERNAME`: Brevo SMTP login (often `xxx@smtp-brevo.com`)
+- `MAIL_PASSWORD`: Brevo SMTP key (not an API key)
+- `MAIL_DEFAULT_SENDER`: A sender verified in Brevo
 
 **Optional (CAPTCHA):**
 - `TURNSTILE_SITE_KEY`: Cloudflare Turnstile key
@@ -180,11 +181,12 @@ pip install --upgrade pip && pip install -r requirements.txt && flask db upgrade
 Email will not send in development unless `MAIL_PASSWORD` is set. To test:
 ```bash
 # .env
-MAIL_SERVER=smtp.gmail.com
+MAIL_SERVER=smtp-relay.brevo.com
 MAIL_PORT=587
 MAIL_USE_TLS=true
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-app-password
+MAIL_USERNAME=xxxxxxxx@smtp-brevo.com
+MAIL_PASSWORD=your-brevo-smtp-key
+MAIL_DEFAULT_SENDER=noreply@mjwebtech.in
 ```
 
 ### Database Migrations
@@ -237,7 +239,7 @@ FLASK_ENV=production python manage.py
 - ✅ Contact form confirmations
 - ✅ OTP delivery
 - ✅ Admin notifications
-- ✅ Support for Gmail SMTP
+- ✅ Support for Brevo SMTP
 
 ---
 
@@ -255,7 +257,7 @@ FLASK_ENV=production python manage.py
 
 ⚠️ **Before Production:**
 - Change `SECRET_KEY` from default
-- Use strong `MAIL_PASSWORD` (Gmail app password)
+- Use a Brevo SMTP key for `MAIL_PASSWORD` (not an API key)
 - Enable CORS only for your domain
 - Monitor logs for attacks
 
@@ -269,7 +271,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md#troubleshooting) for detailed troubleshooting 
 - **Build fails on Netlify**: Check `requirements.txt`, all Python packages must be listed
 - **API not responding**: Check Render logs, verify `DATABASE_URL` and `SECRET_KEY`
 - **CORS errors**: Verify `CORS_ORIGINS` includes your domain
-- **Email not sending**: Check Gmail app password and `MAIL_PASSWORD` env var
+- **Email not sending**: Check Brevo SMTP login, SMTP key, `MAIL_SERVER=smtp-relay.brevo.com`, and a verified sender
 
 ---
 

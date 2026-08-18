@@ -12,7 +12,7 @@ from app import csrf, db
 from app.auth_utils import login_required
 from app.models import JobApplication, OTPVerification
 from app.forms  import CareerForm
-from app.email_service import send_otp_email, send_confirmation_email
+from app.email_service import otp_send_response, send_otp_email, send_confirmation_email
 
 careers_bp = Blueprint("careers", __name__)
 
@@ -107,20 +107,7 @@ def send_application_otp():
     try:
         otp_record = OTPVerification.create_otp(email, purpose="job_application")
         success = send_otp_email(email, otp_record.otp, purpose="job application verification")
-        
-        if success:
-            return jsonify({
-                "success": True, 
-                "message": "OTP sent! Check your email for the verification code.",
-                "expires_in": 600  # 10 minutes in seconds
-            })
-
-        return jsonify({
-            "success": True,
-            "message": "OTP generated successfully. For local development, use the code from the server logs if email delivery is unavailable.",
-            "expires_in": 600,
-            "otp": otp_record.otp,
-        })
+        return otp_send_response(success, otp_record.otp)
             
     except Exception as e:
         current_app.logger.error(f"OTP send error: {e}")

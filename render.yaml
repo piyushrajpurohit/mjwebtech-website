@@ -5,8 +5,8 @@
 #   CORS_ORIGINS          real production frontend origin(s), comma-separated
 #                         example: https://your-domain.com,https://www.your-domain.com
 #                         Do NOT use https://MY_DOMAIN
-#   MAIL_USERNAME         Gmail address used for SMTP
-#   MAIL_PASSWORD         Gmail App Password (not the account password)
+#   MAIL_USERNAME         Brevo SMTP login (often xxx@smtp-brevo.com), not the relay host
+#   MAIL_PASSWORD         Brevo SMTP key (not an API key and not the account password)
 #   TURNSTILE_SITE_KEY    optional Cloudflare Turnstile site key (leave blank to disable)
 #   TURNSTILE_SECRET_KEY  optional Cloudflare Turnstile secret (leave blank to disable)
 #
@@ -47,11 +47,13 @@ services:
       - key: CORS_ORIGINS
         sync: false
       - key: MAIL_SERVER
-        value: smtp.gmail.com
+        value: smtp-relay.brevo.com
       - key: MAIL_PORT
         value: "587"
       - key: MAIL_USE_TLS
         value: "true"
+      - key: MAIL_USE_SSL
+        value: "false"
       - key: MAIL_USERNAME
         sync: false
       - key: MAIL_PASSWORD

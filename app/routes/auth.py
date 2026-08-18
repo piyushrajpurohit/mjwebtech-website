@@ -9,7 +9,7 @@ from flask import (Blueprint, render_template, request,
                    redirect, url_for, flash, current_app, jsonify, session)
 from app import db
 from app.models import OTPVerification, User
-from app.email_service import send_otp_email, send_confirmation_email
+from app.email_service import otp_send_response, send_otp_email, send_confirmation_email
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -132,20 +132,7 @@ def send_register_otp():
     try:
         otp_record = OTPVerification.create_otp(email, purpose="registration")
         success = send_otp_email(email, otp_record.otp, purpose="account registration")
-        
-        if success:
-            return jsonify({
-                "success": True, 
-                "message": "OTP sent! Check your email for the verification code.",
-                "expires_in": 600
-            })
-
-        return jsonify({
-            "success": True,
-            "message": "OTP generated successfully. For local development, use the code from the server logs if email delivery is unavailable.",
-            "expires_in": 600,
-            "otp": otp_record.otp,
-        })
+        return otp_send_response(success, otp_record.otp)
             
     except Exception as e:
         current_app.logger.error(f"OTP send error: {e}")
@@ -188,15 +175,7 @@ def resend_register_otp():
     try:
         otp_record = OTPVerification.create_otp(email, purpose="registration")
         success = send_otp_email(email, otp_record.otp, purpose="account registration")
-        
-        if success:
-            return jsonify({
-                "success": True, 
-                "message": "New OTP sent! Check your email.",
-                "expires_in": 600
-            })
-        else:
-            return jsonify({"success": False, "message": "Failed to send OTP. Please try again."}), 500
+        return otp_send_response(success, otp_record.otp, resent=True)
             
     except Exception as e:
         current_app.logger.error(f"OTP resend error: {e}")

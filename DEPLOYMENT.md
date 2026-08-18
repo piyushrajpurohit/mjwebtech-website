@@ -53,13 +53,14 @@ Set the following in Render dashboard (**not** in `.env`):
 | `FLASK_ENV` | `production` | Static |
 | `SECRET_KEY` | (generate below) | Generate & paste |
 | `CORS_ORIGINS` | `https://MY_DOMAIN,https://www.MY_DOMAIN` | Your domain |
-| `MAIL_SERVER` | `smtp.gmail.com` | Static |
+| `MAIL_SERVER` | `smtp-relay.brevo.com` | Static |
 | `MAIL_PORT` | `587` | Static |
 | `MAIL_USE_TLS` | `true` | Static |
-| `MAIL_USERNAME` | (your email) | Gmail account |
-| `MAIL_PASSWORD` | (app password) | Gmail app password |
-| `MAIL_DEFAULT_SENDER` | `noreply@mjwebtech.com` | Static |
-| `CONTACT_EMAIL` | `info@mjwebtech.com` | Static |
+| `MAIL_USE_SSL` | `false` | Static |
+| `MAIL_USERNAME` | (Brevo SMTP login) | Often `xxx@smtp-brevo.com` |
+| `MAIL_PASSWORD` | (Brevo SMTP key) | SMTP key, not API key |
+| `MAIL_DEFAULT_SENDER` | `noreply@mjwebtech.in` | Must be verified in Brevo |
+| `CONTACT_EMAIL` | `info@mjwebtech.in` | Static |
 | `TURNSTILE_SITE_KEY` | (optional CAPTCHA key) | Cloudflare Turnstile |
 | `TURNSTILE_SECRET_KEY` | (optional CAPTCHA secret) | Cloudflare Turnstile |
 | `DATABASE_URL` | (auto-populated) | PostgreSQL database |
@@ -71,12 +72,12 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 # Copy output and paste into Render dashboard
 ```
 
-**Obtain Gmail App Password:**
-1. Enable 2-Factor Authentication on your Google account
-2. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
-3. Select app: `Mail`, device: `Windows Computer`
-4. Google generates a 16-character password
-5. Copy and paste into `MAIL_PASSWORD` in Render
+**Obtain Brevo SMTP credentials:**
+1. In Brevo, open **Settings → SMTP & API**
+2. Copy **SMTP login** (often `xxxxxxxx@smtp-brevo.com`). Do not use `smtp-relay.brevo.com` as the username
+3. Create an **SMTP key** and paste it into `MAIL_PASSWORD` on Render. Do not use an API key or the account password
+4. Under **Senders, domains & IPs**, verify the address in `MAIL_DEFAULT_SENDER` (for example `noreply@mjwebtech.in`)
+5. Authenticate `mjwebtech.in` (SPF/DKIM) so OTP mail is less likely to land in spam
 
 ### Step 3: Create PostgreSQL Database
 
@@ -115,7 +116,7 @@ curl https://mjwebtech-backend.onrender.com/api/health
 | Build fails: missing dependencies | Ensure all packages in `requirements.txt` |
 | 502 Bad Gateway | Check logs; likely database URL issue |
 | CORS errors on frontend calls | Verify `CORS_ORIGINS` env var includes your frontend domain |
-| Email not sending | Verify Gmail app password (not regular password) |
+| Email not sending | Verify Brevo SMTP login, SMTP key, and a verified sender |
 
 ---
 
@@ -149,7 +150,7 @@ Set in Netlify UI (**Settings** → **Environment**):
 | Key | Value |
 |-----|-------|
 | `FLASK_ENV` | `production` |
-| `CORS_ORIGINS` | `https://MY_DOMAIN,https://www.MY_DOMAIN` |
+| `CORS_ORIGINS` | `https://mjwebtech.in,https://www.mjwebtech.in` |
 
 ### Step 3: Configure API Proxy (netlify.toml)
 
@@ -172,7 +173,7 @@ The `netlify.toml` file is already configured to:
 
 1. In Netlify, go to **Site settings** → **Domain management**
 2. Click **"Add custom domain"**
-3. Enter: `MY_DOMAIN` (e.g., `mjwebtech.com`)
+3. Enter: `mjwebtech.in`
 4. Netlify will show DNS records to add to GoDaddy
 
 **In GoDaddy DNS:**
@@ -250,7 +251,7 @@ curl https://mjwebtech-backend.onrender.com/api/health
 1. Open browser: `https://MY_DOMAIN`
 2. Should load homepage without errors
 3. Check Network tab (DevTools) → API calls should proxy to backend
-4. Test contact form (should send email via Gmail SMTP)
+4. Test contact form (should send email via Brevo SMTP)
 5. Test OTP if enabled
 
 ### Test CORS
@@ -295,13 +296,14 @@ flask db upgrade  # Apply any pending migrations
 
 | Variable | Purpose | Where to Get |
 |----------|---------|--------------|
-| `MAIL_SERVER` | SMTP host | `smtp.gmail.com` |
+| `MAIL_SERVER` | SMTP host | `smtp-relay.brevo.com` |
 | `MAIL_PORT` | SMTP port | `587` |
-| `MAIL_USE_TLS` | Enable TLS | `true` |
-| `MAIL_USERNAME` | Gmail address | Your email |
-| `MAIL_PASSWORD` | App password | [App Passwords](https://myaccount.google.com/apppasswords) |
-| `MAIL_DEFAULT_SENDER` | From address | `noreply@mjwebtech.com` |
-| `CONTACT_EMAIL` | Admin inbox | `info@mjwebtech.com` |
+| `MAIL_USE_TLS` | Enable STARTTLS | `true` |
+| `MAIL_USE_SSL` | SSL (port 465 only) | `false` |
+| `MAIL_USERNAME` | Brevo SMTP login | `xxx@smtp-brevo.com` |
+| `MAIL_PASSWORD` | SMTP key | [SMTP keys](https://app.brevo.com/settings/keys/smtp) |
+| `MAIL_DEFAULT_SENDER` | From address | Verified sender, e.g. `noreply@mjwebtech.in` |
+| `CONTACT_EMAIL` | Admin inbox | `info@mjwebtech.in` |
 
 ### Optional: Cloudflare Turnstile (CAPTCHA)
 
@@ -318,8 +320,8 @@ flask db upgrade  # Apply any pending migrations
 - [ ] Repository pushed to GitHub
 - [ ] `.env` file NOT committed (check `.gitignore`)
 - [ ] `SECRET_KEY` generated (32+ characters)
-- [ ] Gmail account has 2FA enabled
-- [ ] Gmail app password obtained
+- [ ] Brevo SMTP login and SMTP key set on Render
+- [ ] `MAIL_DEFAULT_SENDER` verified in Brevo
 - [ ] GoDaddy domain registered
 - [ ] Domain registered with registrar (GoDaddy)
 
@@ -376,10 +378,10 @@ flask db upgrade  # Apply any pending migrations
 
 ### Email Not Sending
 **Error:** Contact form submits but no email received
-- **Fix:** Verify Gmail app password (not regular password)
-- Check `MAIL_USERNAME` and `MAIL_PASSWORD` in Render
-- Verify admin email address in `CONTACT_EMAIL`
-- Check spam folder
+- **Fix:** Verify Brevo SMTP login (`xxx@smtp-brevo.com`) and SMTP key (not API key)
+- Check `MAIL_USERNAME`, `MAIL_PASSWORD`, and `MAIL_SERVER=smtp-relay.brevo.com` in Render
+- Confirm `MAIL_DEFAULT_SENDER` is a verified sender in Brevo
+- Check spam folder and Brevo transactional logs
 
 ### DNS Not Resolving
 **Error:** Domain not pointing to Netlify
@@ -432,7 +434,7 @@ flask db upgrade  # Apply any pending migrations
 
 ⚠️ **Manual Steps:**
 - Change `SECRET_KEY` from default before first deploy
-- Keep Gmail app password secure (only in Render, never in code)
+- Keep the Brevo SMTP key only in Render, never in code
 - Rotate secrets periodically
 - Monitor error logs for attacks
 

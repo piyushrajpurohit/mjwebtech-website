@@ -9,7 +9,7 @@ from flask import (Blueprint, render_template, request,
 from app import csrf, db, limiter
 from app.models import Contact, ContactActionLog, OTPVerification
 from app.forms  import ContactForm
-from app.email_service import send_otp_email, send_confirmation_email
+from app.email_service import mail_sender, otp_send_response, send_otp_email, send_confirmation_email
 
 contact_bp = Blueprint("contact", __name__)
 
@@ -69,6 +69,7 @@ def _send_notification(contact: Contact):
         from app import mail
         msg = Message(
             subject=f"[MJWebTech] New Contact: {contact.subject}",
+            sender=mail_sender(),
             recipients=[current_app.config["CONTACT_EMAIL"]],
             body=(
                 f"Name:    {contact.name}\n"
@@ -101,20 +102,7 @@ def send_contact_otp():
     try:
         otp_record = OTPVerification.create_otp(email, purpose="contact_verification")
         success = send_otp_email(email, otp_record.otp, purpose="contact form verification")
-        
-        if success:
-            return jsonify({
-                "success": True, 
-                "message": "OTP sent! Check your email for the verification code.",
-                "expires_in": 600
-            })
-
-        return jsonify({
-            "success": True,
-            "message": "OTP generated successfully. For local development, use the code from the server logs if email delivery is unavailable.",
-            "expires_in": 600,
-            "otp": otp_record.otp,
-        })
+        return otp_send_response(success, otp_record.otp)
             
     except Exception as e:
         current_app.logger.error(f"OTP send error: {e}")
