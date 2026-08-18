@@ -208,6 +208,14 @@ def _send_via_smtp(
                 pass
 
 
+def _local_otp_fallback_allowed() -> bool:
+    """Only leak OTP to logs/JSON on an explicit local development app."""
+    import os
+
+    env = (os.environ.get("FLASK_ENV") or "").strip().lower()
+    return env in ("development", "default") and bool(current_app.config.get("DEBUG"))
+
+
 def otp_send_response(success: bool, otp: str, resent: bool = False):
     """JSON payload for OTP send endpoints. Never return the OTP in production."""
     from flask import jsonify
@@ -225,7 +233,7 @@ def otp_send_response(success: bool, otp: str, resent: bool = False):
         }), 200
 
     current_app.logger.warning("OTP email was not delivered")
-    if current_app.debug:
+    if _local_otp_fallback_allowed():
         current_app.logger.warning("DEBUG OTP (not emailed): %s", otp)
         return jsonify({
             "success": True,

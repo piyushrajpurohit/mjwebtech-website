@@ -12,6 +12,7 @@ from flask_mail import Mail
 from config import config_map
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 db   = SQLAlchemy()
 csrf = CSRFProtect()
@@ -24,6 +25,10 @@ def create_app(env: str = None) -> Flask:
 
     env = env or os.environ.get("FLASK_ENV", "default")
     app.config.from_object(config_map.get(env, config_map["default"]))
+
+    # Render terminates TLS at the proxy. Without this, Flask sees HTTP and
+    # CSRF / secure-cookie checks fail on POST /login.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     os.makedirs("instance", exist_ok=True)

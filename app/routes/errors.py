@@ -1,13 +1,30 @@
 """
 routes/errors.py — Custom HTTP error handlers (404, 500, 413, 403).
 """
-from flask import jsonify, render_template, request
+from flask import flash, jsonify, redirect, render_template, request, url_for
+from flask_wtf.csrf import CSRFError
 
 
 def register_error_handlers(app):
 
     def _api_error_response(message: str, status_code: int, error_code: str):
         return jsonify({"success": False, "error": error_code, "message": message}), status_code
+
+    @app.errorhandler(CSRFError)
+    def csrf_error(e):
+        app.logger.warning("CSRF failed on %s %s: %s", request.method, request.path, e.description)
+        if request.path.startswith("/api/"):
+            return _api_error_response(
+                "Your session expired. Refresh the page and try again.",
+                400,
+                "csrf_failed",
+            )
+        flash("Your session expired. Please try again.", "warning")
+        if request.endpoint == "auth.login" or request.path.rstrip("/") == "/login":
+            return redirect(url_for("auth.login"))
+        if request.endpoint == "auth.register" or request.path.rstrip("/") == "/register":
+            return redirect(url_for("auth.register"))
+        return render_template("errors/400.html"), 400
 
     @app.errorhandler(400)
     def bad_request(e):
