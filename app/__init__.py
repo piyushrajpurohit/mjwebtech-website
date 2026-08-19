@@ -10,7 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from flask_mail import Mail
-from config import config_map
+from config import DEFAULT_PRODUCTION_CORS, _merge_cors, config_map
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -63,6 +63,7 @@ def create_app(env: str = None) -> Flask:
 
     env = env or os.environ.get("FLASK_ENV", "default")
     app.config.from_object(config_map.get(env, config_map["default"]))
+    on_render = bool(os.environ.get("RENDER"))
 
     # Render terminates TLS at the proxy. Without this, Flask sees HTTP and
     # CSRF / secure-cookie checks fail on POST /login.
@@ -77,7 +78,15 @@ def create_app(env: str = None) -> Flask:
     mail.init_app(app)
     limiter.init_app(app)
 
-    cors_origins = parse_cors_origins(app.config.get("CORS_ORIGINS", ""))
+    raw_cors = app.config.get("CORS_ORIGINS", "")
+    if isinstance(raw_cors, (list, tuple)):
+        raw_cors = ",".join(raw_cors)
+    # Render always injects RENDER=true. Merge the live domains even if the
+    # dashboard CORS_ORIGINS value is still only the Netlify origin.
+    if env == "production" or on_render:
+        raw_cors = _merge_cors(DEFAULT_PRODUCTION_CORS, raw_cors)
+    cors_origins = parse_cors_origins(raw_cors)
+    app.config["CORS_ORIGINS"] = cors_origins
     app.config["CORS_ORIGIN_LIST"] = cors_origins
     app.logger.info("CORS Origins configured: %s", cors_origins)
     CORS(app, resources={r"/api/*": {"origins": cors_origins}})
@@ -126,7 +135,7 @@ def create_app(env: str = None) -> Flask:
             "Permissions-Policy",
             "camera=(), microphone=(), geolocation=()",
         )
-        if env == "production":
+        if env == "production" or on_render:
             response.headers.setdefault(
                 "Strict-Transport-Security",
                 "max-age=31536000; includeSubDomains",

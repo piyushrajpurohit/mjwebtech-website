@@ -17,6 +17,21 @@ def test_cors_allows_custom_domain(client):
     assert response.headers.get("Access-Control-Allow-Origin") == "https://mjwebtech.in"
 
 
+def test_render_merges_custom_domain_cors(monkeypatch):
+    monkeypatch.setenv("RENDER", "true")
+    monkeypatch.setenv("CORS_ORIGINS", "https://mjwebtech.netlify.app")
+    from app import create_app as factory
+    application = factory("development")
+    with application.app_context():
+        origins = application.config["CORS_ORIGIN_LIST"]
+    assert "https://mjwebtech.in" in origins
+    assert "https://www.mjwebtech.in" in origins
+    assert "https://mjwebtech.netlify.app" in origins
+    client = application.test_client()
+    response = client.get("/api/health", headers={"Origin": "https://mjwebtech.in"})
+    assert response.headers.get("Access-Control-Allow-Origin") == "https://mjwebtech.in"
+
+
 def test_health_503_when_db_down(client):
     with patch("app.routes.api.db.session.execute", side_effect=RuntimeError("db down")):
         response = client.get("/api/health")

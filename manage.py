@@ -10,6 +10,11 @@ Usage:
 import os
 from app import create_app
 
+# Render injects RENDER=true on every service. Default to production there so
+# CORS, secure cookies, and HSTS apply even if FLASK_ENV was left unset.
+if os.environ.get("RENDER"):
+    os.environ.setdefault("FLASK_ENV", "production")
+
 env = os.environ.get("FLASK_ENV", "development")
 application = create_app(env)
 app = application
