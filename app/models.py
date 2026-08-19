@@ -5,6 +5,7 @@ Structured so SQLite (dev) and MySQL (production) both work transparently.
 """
 
 from datetime import datetime, timedelta
+from hmac import compare_digest
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 
@@ -149,7 +150,7 @@ class OTPVerification(db.Model):
 
     id         = db.Column(db.Integer, primary_key=True)
     email      = db.Column(db.String(200), nullable=False, index=True)
-    otp        = db.Column(db.String(6), nullable=False)
+    otp        = db.Column(db.String(255), nullable=False)
     purpose    = db.Column(db.String(50), nullable=False)  # registration, password_reset, email_verify
     is_used    = db.Column(db.Boolean, default=False)
     expires_at = db.Column(db.DateTime, nullable=False)
@@ -163,16 +164,33 @@ class OTPVerification(db.Model):
         return not self.is_used and datetime.utcnow() < self.expires_at
 
     @staticmethod
+    def _otp_matches(stored: str, provided: str) -> bool:
+        if not stored or not provided:
+            return False
+        if stored.startswith(("pbkdf2:", "scrypt:", "argon2:")):
+            return check_password_hash(stored, provided)
+        return compare_digest(stored, provided)
+
+    @staticmethod
     def create_otp(email: str, purpose: str = "registration", expiry_minutes: int = 10) -> "OTPVerification":
-        """Create a new OTP verification record."""
+        """Create a new OTP. Previous unused codes for this email+purpose are invalidated."""
         from app.email_service import generate_otp
+
+        OTPVerification.query.filter_by(
+            email=email,
+            purpose=purpose,
+            is_used=False,
+        ).update({OTPVerification.is_used: True}, synchronize_session=False)
+
+        plaintext = generate_otp(6)
         expires_at = datetime.utcnow() + timedelta(minutes=expiry_minutes)
         otp_record = OTPVerification(
             email=email,
-            otp=generate_otp(6),
+            otp=generate_password_hash(plaintext),
             purpose=purpose,
-            expires_at=expires_at
+            expires_at=expires_at,
         )
+        otp_record.plain_otp = plaintext
         db.session.add(otp_record)
         db.session.commit()
         return otp_record
@@ -184,15 +202,15 @@ class OTPVerification(db.Model):
         Returns True if valid, False otherwise.
         Marks OTP as used after successful verification.
         """
-        otp_record = OTPVerification.query.filter_by(
+        records = OTPVerification.query.filter_by(
             email=email,
-            otp=otp,
             purpose=purpose,
-            is_used=False
-        ).first()
+            is_used=False,
+        ).order_by(OTPVerification.created_at.desc()).all()
 
-        if otp_record and otp_record.is_valid():
-            otp_record.is_used = True
-            db.session.commit()
-            return True
+        for otp_record in records:
+            if otp_record.is_valid() and OTPVerification._otp_matches(otp_record.otp, otp):
+                otp_record.is_used = True
+                db.session.commit()
+                return True
         return False

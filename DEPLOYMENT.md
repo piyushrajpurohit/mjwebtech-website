@@ -52,7 +52,8 @@ Set the following in Render dashboard (**not** in `.env`):
 |-----|-------|--------|
 | `FLASK_ENV` | `production` | Static |
 | `SECRET_KEY` | (generate below) | Generate & paste |
-| `CORS_ORIGINS` | `https://MY_DOMAIN,https://www.MY_DOMAIN` | Your domain |
+| `CORS_ORIGINS` | `https://mjwebtech.in,https://www.mjwebtech.in,https://mjwebtech.netlify.app` | Frontend origins for `fetch()` |
+| `REDIS_URL` | (optional) | Shared rate-limit store; omit to use in-memory limits |
 | `BREVO_API_KEY` | (API key) | Brevo SMTP & API → API Keys |
 | `MAIL_DEFAULT_SENDER` | `noreply@mjwebtech.in` | Must be verified in Brevo |
 | `MAIL_TIMEOUT` | `8` | Seconds; avoids hung OTP requests |
@@ -146,7 +147,7 @@ Set in Netlify UI (**Settings** → **Environment**):
 | Key | Value |
 |-----|-------|
 | `FLASK_ENV` | `production` |
-| `CORS_ORIGINS` | `https://mjwebtech.in,https://www.mjwebtech.in` |
+| `CORS_ORIGINS` | `https://mjwebtech.in,https://www.mjwebtech.in,https://mjwebtech.netlify.app` |
 
 ### Step 3: Configure API Proxy (netlify.toml)
 

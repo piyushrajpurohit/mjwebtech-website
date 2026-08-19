@@ -2,9 +2,9 @@
 # Repo: https://github.com/piyushrajpurohit/mjwebtech-website
 #
 # Before first deploy, set these in the Render Dashboard (Blueprint prompts for sync: false):
-#   CORS_ORIGINS          real production frontend origin(s), comma-separated
-#                         example: https://your-domain.com,https://www.your-domain.com
-#                         Do NOT use https://MY_DOMAIN
+#   CORS_ORIGINS          production frontend origins, comma-separated
+#                         default if unset: https://mjwebtech.in,https://www.mjwebtech.in,https://mjwebtech.netlify.app
+#   REDIS_URL             optional; Flask-Limiter uses in-memory storage without it
 #   BREVO_API_KEY         Brevo transactional API key (Settings → SMTP & API → API Keys)
 #                         Required on Render: outbound SMTP ports are blocked/delayed
 #   MAIL_DEFAULT_SENDER   sender verified in Brevo (Senders, domains & IPs)
@@ -46,7 +46,7 @@ services:
           name: mjwebtech_db
           property: connectionString
       - key: CORS_ORIGINS
-        sync: false
+        value: https://mjwebtech.in,https://www.mjwebtech.in,https://mjwebtech.netlify.app
       - key: BREVO_API_KEY
         sync: false
       - key: MAIL_SERVER

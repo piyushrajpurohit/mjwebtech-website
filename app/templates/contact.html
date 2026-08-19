@@ -45,15 +45,16 @@
           <div class="rp-item"><i class="bi bi-calendar-check text-mj-accent"></i><span>< 48 hrs — Consulting Proposals</span></div>
         </div>
 
+        {% if social_links %}
         <div class="mt-4">
           <h6 class="mb-3 text-muted">Follow Us</h6>
           <div class="social-links">
-            <a href="https://linkedin.com"  target="_blank" rel="noopener" class="social-link" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
-            <a href="https://twitter.com"   target="_blank" rel="noopener" class="social-link" aria-label="Twitter/X"><i class="bi bi-twitter-x"></i></a>
-            <a href="https://facebook.com"  target="_blank" rel="noopener" class="social-link" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
-            <a href="https://instagram.com" target="_blank" rel="noopener" class="social-link" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+            {% for link in social_links %}
+            <a href="{{ link.url }}" target="_blank" rel="noopener" class="social-link" aria-label="{{ link.label }}"><i class="bi bi-{{ link.icon }}"></i></a>
+            {% endfor %}
           </div>
         </div>
+        {% endif %}
       </div>
 
       <!-- RIGHT — Form -->
@@ -135,7 +136,7 @@
                 <div class="form-check">
                   {{ form.privacy(class="form-check-input" + (" is-invalid" if form.privacy.errors else ""), id="privacyCheck") }}
                   <label class="form-check-label" for="privacyCheck">
-                    I agree to MJ WebTech's privacy policy and consent to being contacted regarding my enquiry.
+                    I agree to MJ WebTech's <a href="{{ url_for('main.privacy') }}">privacy policy</a> and consent to being contacted regarding my enquiry.
                   </label>
                   {% for err in form.privacy.errors %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}
                 </div>
@@ -260,6 +261,8 @@ let otpTimerInterval = null;
       .then(data => {
         if (data.success) {
           emailVerified = true;
+          const tokenInput = form?.querySelector('[name="verification_token"]');
+          if (tokenInput) tokenInput.value = data.verification_token || '';
           otpSection.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>Email verified! You can now send your message.</div>';
           if (sendOtpBtn) sendOtpBtn.style.display = 'none';
         } else {
@@ -351,6 +354,7 @@ let otpTimerInterval = null;
       subject: form.querySelector('[name="subject"]')?.value.trim(),
       message: form.querySelector('[name="message"]')?.value.trim(),
       turnstile_token: turnstileInput ? turnstileInput.value : '',
+      verification_token: form.querySelector('[name="verification_token"]')?.value || '',
     };
 
     setButtonLoading(submitBtn, true, 'Sending...');

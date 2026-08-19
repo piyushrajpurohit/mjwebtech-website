@@ -68,6 +68,7 @@ def main():
         "/contact",
         "/blog",
         "/careers",
+        "/privacy",
     ]
 
     try:

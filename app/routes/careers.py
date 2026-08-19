@@ -4,15 +4,15 @@ Uses Flask-WTF CareerForm for full validation + CSRF.
 Includes OTP verification and confirmation emails.
 """
 
-import os, uuid, bleach, json
-from werkzeug.utils import secure_filename
+import bleach
 from flask import (Blueprint, render_template, request,
-                   redirect, url_for, flash, current_app, jsonify)
-from app import csrf, db
+                   redirect, url_for, flash, current_app, jsonify, session)
+from app import csrf, db, limiter
 from app.auth_utils import login_required
 from app.models import JobApplication, OTPVerification
 from app.forms  import CareerForm
 from app.email_service import otp_send_response, send_otp_email, send_confirmation_email
+from app.security import email_otp_verified, json_payload, mark_email_verified, save_resume
 
 careers_bp = Blueprint("careers", __name__)
 
@@ -89,25 +89,24 @@ JOB_OPENINGS = [
 # ── OTP Verification Routes ──
 @careers_bp.route("/careers/send-otp", methods=["POST"])
 @csrf.exempt
+@limiter.limit("5 per hour")
 def send_application_otp():
     """Send OTP to candidate before allowing application submission."""
-    payload = request.get_json(silent=True) or {}
+    payload = json_payload()
     email = (payload.get("email") or "").strip().lower()
     
     if not email:
         return jsonify({"success": False, "message": "Email is required."}), 400
     
-    # Check for valid email format
     import re
     email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     if not re.match(email_pattern, email):
         return jsonify({"success": False, "message": "Please enter a valid email address."}), 400
     
-    # Create and send OTP
     try:
         otp_record = OTPVerification.create_otp(email, purpose="job_application")
-        success = send_otp_email(email, otp_record.otp, purpose="job application verification")
-        return otp_send_response(success, otp_record.otp)
+        success = send_otp_email(email, otp_record.plain_otp, purpose="job application verification")
+        return otp_send_response(success, otp_record.plain_otp)
             
     except Exception as e:
         current_app.logger.error(f"OTP send error: {e}")
@@ -116,9 +115,10 @@ def send_application_otp():
 
 @careers_bp.route("/careers/verify-otp", methods=["POST"])
 @csrf.exempt
+@limiter.limit("10 per minute")
 def verify_application_otp():
     """Verify OTP before allowing application submission."""
-    payload = request.get_json(silent=True) or {}
+    payload = json_payload()
     email = (payload.get("email") or "").strip().lower()
     otp = (payload.get("otp") or "").strip()
     
@@ -128,9 +128,13 @@ def verify_application_otp():
     is_valid = OTPVerification.verify_otp(email, otp, purpose="job_application")
     
     if is_valid:
-        return jsonify({"success": True, "message": "Email verified successfully!"})
-    else:
-        return jsonify({"success": False, "message": "Invalid or expired OTP. Please request a new one."}), 400
+        token = mark_email_verified(email, "job_application")
+        return jsonify({
+            "success": True,
+            "message": "Email verified successfully!",
+            "verification_token": token,
+        })
+    return jsonify({"success": False, "message": "Invalid or expired OTP. Please request a new one."}), 400
 
 
 @careers_bp.route("/careers")
@@ -140,6 +144,7 @@ def careers():
 
 @careers_bp.route("/careers/apply", methods=["GET", "POST"])
 @login_required
+@limiter.limit("10 per hour", methods=["POST"])
 def apply():
     form = CareerForm()
 
@@ -148,20 +153,15 @@ def apply():
         form.position.data = request.args.get("position")
 
     if form.validate_on_submit():
-        # ── Secure file save ──
-        file = form.resume.data
-        safe   = secure_filename(file.filename)
-        unique = f"{uuid.uuid4().hex}_{safe}"
-        dest   = os.path.join(current_app.config["UPLOAD_FOLDER"], unique)
-
-        # Double-check size (Werkzeug already enforces MAX_CONTENT_LENGTH)
-        file.seek(0, 2)
-        size = file.tell(); file.seek(0)
-        if size > current_app.config["MAX_CONTENT_LENGTH"]:
-            flash("Resume file must be under 5 MB.", "danger")
+        submit_email = bleach.clean(form.email.data, tags=[], strip=True)[:254].lower()
+        if not email_otp_verified(submit_email, "job_application"):
+            flash("Please verify your email with OTP before submitting.", "danger")
             return render_template("apply.html", form=form, jobs=JOB_OPENINGS)
 
-        file.save(dest)
+        unique, upload_error = save_resume(form.resume.data)
+        if upload_error:
+            flash(upload_error, "danger")
+            return render_template("apply.html", form=form, jobs=JOB_OPENINGS)
 
         application = JobApplication(
             full_name       = bleach.clean(form.full_name.data,    tags=[], strip=True)[:120],
@@ -188,8 +188,9 @@ def apply():
         except Exception as e:
             current_app.logger.warning(f"Confirmation email failed: {e}")
 
+        session.pop("otp_verified:job_application", None)
         flash(
-            f"Application submitted for <strong>{form.position.data}</strong>! "
+            f"Application submitted for {form.position.data}. "
             "We'll review your profile and reach out within 5–7 business days.",
             "success"
         )

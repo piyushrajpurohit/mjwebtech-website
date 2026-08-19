@@ -70,12 +70,38 @@ def _engine_options(uri: str) -> dict:
 _SQLALCHEMY_DATABASE_URI = _prepare_database_uri(_database_url())
 
 
+DEFAULT_PRODUCTION_CORS = (
+    "https://mjwebtech.in,"
+    "https://www.mjwebtech.in,"
+    "https://mjwebtech.netlify.app"
+)
+
+
+def _merge_cors(*values: str) -> str:
+    seen = []
+    for value in values:
+        for origin in (value or "").split(","):
+            origin = origin.strip().rstrip("/")
+            if origin and origin not in seen:
+                seen.append(origin)
+    return ",".join(seen)
+
+
 class Config:
     """Base configuration — inherited by all environments."""
     
     SECRET_KEY = os.environ.get("SECRET_KEY", "change-this-in-production-env")
     WTF_CSRF_ENABLED = True
     WTF_CSRF_TIME_LIMIT = 3600
+
+    # Flask-Limiter 2.x reads RATELIMIT_STORAGE_URL. 3.x uses RATELIMIT_STORAGE_URI.
+    RATELIMIT_ENABLED = os.environ.get("RATELIMIT_ENABLED", "true").lower() != "false"
+    RATELIMIT_STORAGE_URI = (
+        os.environ.get("RATELIMIT_STORAGE_URI")
+        or os.environ.get("REDIS_URL")
+        or "memory://"
+    )
+    RATELIMIT_STORAGE_URL = RATELIMIT_STORAGE_URI
 
     # ── Database Configuration ──
     # LOCAL: SQLite (development only)
@@ -85,7 +111,8 @@ class Config:
     SQLALCHEMY_ENGINE_OPTIONS = _engine_options(_SQLALCHEMY_DATABASE_URI)
 
     # ── File Upload Settings ──
-    UPLOAD_FOLDER = os.path.join(BASE_DIR, "app", "static", "uploads")
+    # Kept outside app/static so resumes are not world-readable.
+    UPLOAD_FOLDER = os.path.join(BASE_DIR, "instance", "uploads")
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB limit
     ALLOWED_EXTENSIONS = {"pdf", "doc", "docx"}
     ALLOWED_MIME_TYPES = {
@@ -121,8 +148,13 @@ class Config:
     # ── Company Information ──
     COMPANY_NAME    = "MJ WebTech Pvt. Ltd."
     COMPANY_EMAIL   = "info@mjwebtech.in"
-    COMPANY_PHONE   = "+91-98765-43210"
+    COMPANY_PHONE   = os.environ.get("COMPANY_PHONE", "+91-98765-43210")
     COMPANY_ADDRESS = "109, Adarsh Nagar, Near Bajaj Agency, Mahadeva Road, Siwan, Bihar - 841227"
+    SOCIAL_LINKEDIN = os.environ.get("SOCIAL_LINKEDIN", "").strip()
+    SOCIAL_TWITTER = os.environ.get("SOCIAL_TWITTER", "").strip()
+    SOCIAL_FACEBOOK = os.environ.get("SOCIAL_FACEBOOK", "").strip()
+    SOCIAL_INSTAGRAM = os.environ.get("SOCIAL_INSTAGRAM", "").strip()
+    SOCIAL_YOUTUBE = os.environ.get("SOCIAL_YOUTUBE", "").strip()
     GOOGLE_MAPS_EMBED = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3597.9!2d84.3627!3d26.2391!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3992fd53f4e3b965:0x21c5230d6e5bfaec!2s109,+Adarsh+Nagar,+Mahadeva+Road,+Siwan,+Bihar+841227!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
 
 
@@ -149,9 +181,9 @@ class ProductionConfig(Config):
     REMEMBER_COOKIE_SECURE  = True      # HTTPS only
     
     # ── CORS Configuration ──
-    # Must be set via CORS_ORIGINS in the Render dashboard.
-    # Comma-separated production frontend origins only. No placeholder domain.
-    CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "")
+    # Dashboard CORS_ORIGINS wins when set. Empty/missing falls back to the
+    # live custom domain plus the Netlify origin so fetch() is not blocked.
+    CORS_ORIGINS = _merge_cors(DEFAULT_PRODUCTION_CORS, os.environ.get("CORS_ORIGINS", ""))
     
     # ── Database ──
     # MUST use PostgreSQL in production (via DATABASE_URL).
@@ -159,6 +191,11 @@ class ProductionConfig(Config):
     # Only enforce this when actually running in production so config import
     # does not fail during local/dev or static export.
     if os.environ.get("FLASK_ENV") == "production":
+        _secret = (os.environ.get("SECRET_KEY") or "").strip()
+        if not _secret or _secret == "change-this-in-production-env":
+            raise ValueError(
+                "PRODUCTION: SECRET_KEY must be set to a strong random value."
+            )
         if not _is_postgresql_uri(Config.SQLALCHEMY_DATABASE_URI or ""):
             raise ValueError(
                 "PRODUCTION: DATABASE_URL must be a PostgreSQL URL "
@@ -169,9 +206,14 @@ class ProductionConfig(Config):
 class TestingConfig(Config):
     """Testing configuration — in-memory SQLite, CSRF disabled."""
     TESTING = True
+    DEBUG = False
     WTF_CSRF_ENABLED = False
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
-    CORS_ORIGINS = "http://localhost:3000"
+    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
+    SECRET_KEY = "test-secret-key-not-for-production"
+    CORS_ORIGINS = "http://localhost:3000,https://mjwebtech.in,https://www.mjwebtech.in"
+    RATELIMIT_ENABLED = False
+    UPLOAD_FOLDER = os.path.join(BASE_DIR, "instance", "test_uploads")
 
 
 config_map = {

@@ -6,6 +6,7 @@ Provides secure, validated endpoints for items, authentication, and contact subm
 import re
 import bleach
 from flask import Blueprint, jsonify, request, current_app, session
+from sqlalchemy import text
 from app import csrf, db, limiter
 from app.models import ApiItem, Contact, ContactActionLog, User
 from app.email_service import send_confirmation_email
@@ -13,6 +14,7 @@ from app.auth_utils import login_required
 from app.routes.auth import send_register_otp, verify_register_otp, resend_register_otp
 from app.routes.contact import send_contact_otp as contact_send_otp, verify_contact_otp as contact_verify_otp, _verify_turnstile
 from app.routes.careers import send_application_otp as career_send_otp, verify_application_otp as career_verify_otp
+from app.security import MIN_PASSWORD_LENGTH, email_otp_verified, json_payload
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -30,14 +32,28 @@ def _is_valid_email(email: str) -> bool:
     return bool(re.match(pattern, email))
 
 
+def _establish_session(user: User) -> None:
+    session.clear()
+    session["user_id"] = user.id
+
+
 @api_bp.route("/health", methods=["GET"])
 @csrf.exempt
 def health():
-    return jsonify({
-        "success": True,
-        "message": "API is healthy",
+    db_ok = True
+    try:
+        db.session.execute(text("SELECT 1"))
+    except Exception as exc:
+        current_app.logger.error("Health DB check failed: %s", exc)
+        db_ok = False
+
+    payload = {
+        "success": db_ok,
+        "message": "API is healthy" if db_ok else "Database unavailable",
         "service": "mjwebtech",
-    })
+        "database": "ok" if db_ok else "unavailable",
+    }
+    return jsonify(payload), 200 if db_ok else 503
 
 
 @api_bp.route("/items", methods=["GET"])
@@ -54,8 +70,8 @@ def list_items():
 @login_required
 @csrf.exempt
 def create_item():
-    payload = request.get_json(silent=True) or {}
-    if not isinstance(payload, dict):
+    payload = json_payload()
+    if not payload:
         return _json_error("JSON object payload is required.", 400, "invalid_payload")
 
     name = (payload.get("name") or "").strip()
@@ -83,9 +99,10 @@ def create_item():
 
 @api_bp.route("/login", methods=["POST"])
 @csrf.exempt
+@limiter.limit("10 per minute")
 def login():
-    payload = request.get_json(silent=True) or {}
-    if not isinstance(payload, dict):
+    payload = json_payload()
+    if not isinstance(request.get_json(silent=True), dict) and not payload:
         return _json_error("JSON object payload is required.", 400, "invalid_payload")
 
     email = (payload.get("email") or "").strip().lower()
@@ -101,10 +118,10 @@ def login():
         return _json_error("Please provide a valid email address.", 400, "invalid_email")
 
     user = User.query.filter_by(email=email).first()
-    if not user or not user.check_password(password):
+    if not user or not user.check_password(password) or not user.is_active:
         return _json_error("Invalid email or password.", 401, "unauthorized")
 
-    session["user_id"] = user.id
+    _establish_session(user)
     return jsonify({
         "success": True,
         "message": "Login successful.",
@@ -120,14 +137,16 @@ def login_alias():
 
 @api_bp.route("/register", methods=["POST"])
 @csrf.exempt
+@limiter.limit("5 per minute")
 def register():
-    payload = request.get_json(silent=True) or {}
-    if not isinstance(payload, dict):
+    payload = json_payload()
+    if not payload:
         return _json_error("JSON object payload is required.", 400, "invalid_payload")
 
     name = (payload.get("name") or "").strip()
     email = (payload.get("email") or "").strip().lower()
     password = payload.get("password") or ""
+    token = (payload.get("verification_token") or "").strip()
 
     if not name or len(name) < 2:
         return _json_error("Name is required and must be at least 2 characters long.", 400, "invalid_name")
@@ -135,8 +154,19 @@ def register():
     if not email or not _is_valid_email(email):
         return _json_error("Please provide a valid email address.", 400, "invalid_email")
 
-    if not password or len(password) < 6:
-        return _json_error("Password must be at least 6 characters long.", 400, "weak_password")
+    if not password or len(password) < MIN_PASSWORD_LENGTH:
+        return _json_error(
+            f"Password must be at least {MIN_PASSWORD_LENGTH} characters long.",
+            400,
+            "weak_password",
+        )
+
+    if not email_otp_verified(email, "registration", token):
+        return _json_error(
+            "Please verify your email with OTP before registering.",
+            403,
+            "otp_required",
+        )
 
     if User.query.filter_by(email=email).first():
         return _json_error("An account with this email already exists.", 409, "email_taken")
@@ -146,7 +176,9 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    session["user_id"] = user.id
+    session.pop("otp_verified:registration", None)
+    session.pop("otp_verified_email", None)
+    _establish_session(user)
     return jsonify({
         "success": True,
         "message": "Registration successful.",
@@ -172,7 +204,7 @@ def profile():
 @login_required
 @csrf.exempt
 def api_logout():
-    session.pop("user_id", None)
+    session.clear()
     return jsonify({
         "success": True,
         "message": "Logged out successfully.",
@@ -225,7 +257,10 @@ def api_verify_contact_otp():
 @csrf.exempt
 @limiter.limit("10 per hour")
 def submit_contact():
-    payload = request.get_json(silent=True) or {}
+    payload = json_payload()
+    if not payload:
+        return _json_error("JSON object payload is required.", 400, "invalid_payload")
+
     turnstile_token = payload.get("turnstile_token") or payload.get("cf-turnstile-response")
 
     if current_app.config.get("TURNSTILE_SECRET_KEY"):
@@ -235,8 +270,6 @@ def submit_contact():
         verified, captcha_message = _verify_turnstile(turnstile_token)
         if not verified:
             return _json_error(captcha_message or "CAPTCHA verification failed.", 400, "captcha_failed")
-    if not isinstance(payload, dict):
-        return _json_error("JSON object payload is required.", 400, "invalid_payload")
 
     name = (payload.get("name") or "").strip()
     email = (payload.get("email") or "").strip().lower()
@@ -244,6 +277,7 @@ def submit_contact():
     phone = (payload.get("phone") or "").strip()
     subject = (payload.get("subject") or "").strip()
     message = (payload.get("message") or "").strip()
+    token = (payload.get("verification_token") or "").strip()
 
     if not name or len(name) < 2:
         return _json_error("Name is required.", 400, "invalid_name")
@@ -256,6 +290,13 @@ def submit_contact():
 
     if not message or len(message) < 10:
         return _json_error("Message must be at least 10 characters long.", 400, "invalid_message")
+
+    if not email_otp_verified(email, "contact_verification", token):
+        return _json_error(
+            "Please verify your email with OTP before sending a message.",
+            403,
+            "otp_required",
+        )
 
     entry = Contact(
         name=bleach.clean(name, tags=[], strip=True)[:120],
@@ -273,7 +314,7 @@ def submit_contact():
         contact_id=entry.id,
         action="Created",
         performed_by=f"API contact submit ({email})",
-        notes=f"Contact created via API submission.",
+        notes="Contact created via API submission.",
     )
     db.session.add(log)
     db.session.commit()
@@ -289,6 +330,7 @@ def submit_contact():
     except Exception as exc:  # pragma: no cover - best effort email
         current_app.logger.warning("Contact confirmation email failed: %s", exc)
 
+    session.pop("otp_verified:contact_verification", None)
     return jsonify({
         "success": True,
         "message": "Your message has been received. We will get back to you shortly.",

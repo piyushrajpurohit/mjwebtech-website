@@ -21,6 +21,18 @@ def login_required(view_func):
                 next_url = next_url[:-1]
             return redirect(url_for("auth.login", next=next_url))
 
+        user = User.query.get(session["user_id"])
+        if not user or not user.is_active:
+            session.pop("user_id", None)
+            if request.path.startswith("/api/"):
+                return jsonify({
+                    "success": False,
+                    "message": "Authentication required.",
+                    "error": "unauthorized",
+                }), 401
+            flash("Please log in to access that page.", "warning")
+            return redirect(url_for("auth.login"))
+
         return view_func(*args, **kwargs)
 
     return wrapper
@@ -45,7 +57,7 @@ def admin_required(view_func):
             return redirect(url_for("auth.login", next=next_url))
 
         user = User.query.get(session["user_id"])
-        if not user or not user.is_admin:
+        if not user or not user.is_active or not user.is_admin:
             if request.path.startswith("/api/"):
                 return jsonify({
                     "success": False,

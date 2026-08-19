@@ -5,11 +5,12 @@ Includes OTP verification and confirmation emails.
 
 import bleach, re, json, urllib.request, urllib.parse
 from flask import (Blueprint, render_template, request,
-                   redirect, url_for, flash, current_app, jsonify)
+                   redirect, url_for, flash, current_app, jsonify, session)
 from app import csrf, db, limiter
 from app.models import Contact, ContactActionLog, OTPVerification
 from app.forms  import ContactForm
 from app.email_service import otp_send_response, send_email, send_otp_email, send_confirmation_email
+from app.security import email_otp_verified, json_payload, mark_email_verified
 
 contact_bp = Blueprint("contact", __name__)
 
@@ -81,9 +82,10 @@ def _send_notification(contact: Contact):
 # ── OTP Routes for Contact Form ──
 @contact_bp.route("/contact/send-otp", methods=["POST"])
 @csrf.exempt
+@limiter.limit("5 per hour")
 def send_contact_otp():
     """Send OTP to user before allowing contact form submission."""
-    payload = request.get_json(silent=True) or {}
+    payload = json_payload()
     email = (payload.get("email") or "").strip().lower()
     
     if not email:
@@ -95,8 +97,8 @@ def send_contact_otp():
     
     try:
         otp_record = OTPVerification.create_otp(email, purpose="contact_verification")
-        success = send_otp_email(email, otp_record.otp, purpose="contact form verification")
-        return otp_send_response(success, otp_record.otp)
+        success = send_otp_email(email, otp_record.plain_otp, purpose="contact form verification")
+        return otp_send_response(success, otp_record.plain_otp)
             
     except Exception as e:
         current_app.logger.error(f"OTP send error: {e}")
@@ -105,9 +107,10 @@ def send_contact_otp():
 
 @contact_bp.route("/contact/verify-otp", methods=["POST"])
 @csrf.exempt
+@limiter.limit("10 per minute")
 def verify_contact_otp():
     """Verify OTP before allowing contact form submission."""
-    payload = request.get_json(silent=True) or {}
+    payload = json_payload()
     email = (payload.get("email") or "").strip().lower()
     otp = (payload.get("otp") or "").strip()
     
@@ -117,9 +120,13 @@ def verify_contact_otp():
     is_valid = OTPVerification.verify_otp(email, otp, purpose="contact_verification")
     
     if is_valid:
-        return jsonify({"success": True, "message": "Email verified successfully!"})
-    else:
-        return jsonify({"success": False, "message": "Invalid or expired OTP. Please request a new one."}), 400
+        token = mark_email_verified(email, "contact_verification")
+        return jsonify({
+            "success": True,
+            "message": "Email verified successfully!",
+            "verification_token": token,
+        })
+    return jsonify({"success": False, "message": "Invalid or expired OTP. Please request a new one."}), 400
 
 
 @contact_bp.route("/contact", methods=["GET", "POST"])
@@ -136,6 +143,16 @@ def contact():
         verified, captcha_message = _verify_turnstile(token)
         if not verified:
             flash(captcha_message, "danger")
+            return render_template(
+                "contact.html",
+                form=form,
+                map_embed=map_embed,
+                turnstile_site_key=current_app.config.get("TURNSTILE_SITE_KEY"),
+            )
+
+        submit_email = bleach.clean(form.email.data, tags=[], strip=True)[:254].lower()
+        if not email_otp_verified(submit_email, "contact_verification"):
+            flash("Please verify your email with OTP before sending a message.", "danger")
             return render_template(
                 "contact.html",
                 form=form,
@@ -176,6 +193,7 @@ def contact():
         except Exception as e:
             current_app.logger.warning(f"Confirmation email failed: {e}")
         
+        session.pop("otp_verified:contact_verification", None)
         flash("Thank you! Your message has been received. We'll get back to you within 24 hours.", "success")
         return redirect(url_for("contact.contact"))
 

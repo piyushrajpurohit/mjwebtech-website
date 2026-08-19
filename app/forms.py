@@ -8,7 +8,7 @@ from flask_wtf         import FlaskForm
 from flask_wtf.file    import FileField, FileAllowed, FileRequired
 from wtforms           import (
     StringField, TextAreaField, SelectField,
-    TelField, EmailField, SubmitField, BooleanField,
+    TelField, EmailField, SubmitField, BooleanField, HiddenField,
 )
 from wtforms.validators import (
     DataRequired, Email, Length, Optional, Regexp, ValidationError,
@@ -55,6 +55,7 @@ class ContactForm(FlaskForm):
         validators=[DataRequired('Message is required.'), Length(min=10, max=3000, message='Message must be 10–3000 characters.')])
     privacy = BooleanField('I agree to the privacy policy.',
         validators=[DataRequired('You must accept the privacy policy.')])
+    verification_token = HiddenField()
     submit  = SubmitField('Send Message')
 
 
@@ -71,7 +72,7 @@ EXPERIENCE_CHOICES = [
 POSITION_CHOICES = [
     ('',                        '— Select Position —'),
     ('Full Stack Developer',    'Full Stack Developer'),
-    ('Frontend Developer',      ' Developer (React / Vue)'),
+    ('Frontend Developer',      'Frontend Developer (React / Vue)'),
     ('Backend Developer',       'Backend Developer (Python / Node)'),
     ('Mobile App Developer',    'Mobile App Developer'),
     ('UI/UX Designer',          'UI/UX Designer'),
@@ -109,4 +110,5 @@ class CareerForm(FlaskForm):
             FileRequired('Please upload your resume.'),
             FileAllowed(['pdf','doc','docx'], 'Only PDF, DOC, or DOCX files are allowed.'),
         ])
+    verification_token = HiddenField()
     submit = SubmitField('Submit Application')

@@ -162,6 +162,10 @@ def download_application_resume(application_id):
     if not application.resume_filename:
         abort(404)
 
+    from app.security import is_safe_upload_name
+    if not is_safe_upload_name(application.resume_filename):
+        abort(404)
+
     upload_folder = current_app.config.get("UPLOAD_FOLDER")
     if not upload_folder:
         abort(404)

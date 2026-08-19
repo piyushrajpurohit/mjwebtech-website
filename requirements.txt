@@ -30,5 +30,8 @@ python-dotenv==1.0.1
 Flask-Limiter==2.9.0
 Flask-Migrate==4.0.4
 
+# ── Testing ──
+pytest==8.3.2
+
 # ── Production Web Server ──
 gunicorn==22.0.0  # WSGI server for Render

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy — MJ WebTech Pvt. Ltd.{% endblock %}
+{% block meta_desc %}Privacy policy for MJ WebTech Pvt. Ltd. How we collect, use, and protect enquiry, account, and job-application data.{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="container text-center" data-aos="fade-up">
+    <div class="section-badge">Legal</div>
+    <h1 class="page-hero-title">Privacy <span class="text-mj-accent">Policy</span></h1>
+    <p class="page-hero-sub">How MJ WebTech Pvt. Ltd. handles the information you share with us.</p>
+  </div>
+</section>
+
+<section class="section-pad">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <p class="text-secondary">Last updated: August 2026</p>
+        <p class="text-secondary">MJ WebTech Pvt. Ltd. (“we”, “us”) operates mjwebtech.in. This policy describes the personal data we collect when you use our website, contact us, create an account, or apply for a role.</p>
+
+        <h2 class="h4 mt-4">Information we collect</h2>
+        <ul class="text-secondary">
+          <li>Contact form: name, email, company, phone, subject, and message.</li>
+          <li>Accounts: name, email, and a hashed password. We verify email with a one-time code.</li>
+          <li>Job applications: name, email, phone, role, experience, cover letter, and resume file.</li>
+          <li>Technical data: IP address and basic request metadata used to protect the site from abuse.</li>
+        </ul>
+
+        <h2 class="h4 mt-4">How we use it</h2>
+        <ul class="text-secondary">
+          <li>To respond to enquiries and provide the services you request.</li>
+          <li>To create and secure your account.</li>
+          <li>To evaluate job applications and contact candidates.</li>
+          <li>To prevent spam, fraud, and unauthorized access.</li>
+        </ul>
+
+        <h2 class="h4 mt-4">Sharing</h2>
+        <p class="text-secondary">We do not sell your personal data. We share it only with infrastructure and email providers needed to run this website (for example hosting and transactional email), or when required by law.</p>
+
+        <h2 class="h4 mt-4">Retention</h2>
+        <p class="text-secondary">Enquiry and application records are kept as long as needed for business follow-up and legal obligations, then deleted or anonymized. You may ask us to correct or delete your data by emailing <a href="mailto:{{ company_email }}">{{ company_email }}</a>.</p>
+
+        <h2 class="h4 mt-4">Security</h2>
+        <p class="text-secondary">Passwords and one-time codes are stored hashed. Resume files are not published on the public website and are available only to authorized administrators.</p>
+
+        <h2 class="h4 mt-4">Contact</h2>
+        <p class="text-secondary mb-0">MJ WebTech Pvt. Ltd., {{ company_address }}. Email: <a href="mailto:{{ company_email }}">{{ company_email }}</a>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

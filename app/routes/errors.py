@@ -50,6 +50,14 @@ def register_error_handlers(app):
             return _api_error_response("The uploaded payload is too large.", 413, "payload_too_large")
         return render_template("errors/413.html"), 413
 
+    @app.errorhandler(429)
+    def too_many_requests(e):
+        message = "Too many requests. Please wait and try again."
+        if request.path.startswith("/api/"):
+            return _api_error_response(message, 429, "rate_limited")
+        flash(message, "warning")
+        return render_template("errors/400.html"), 429
+
     @app.errorhandler(500)
     def server_error(e):
         if request.path.startswith("/api/"):

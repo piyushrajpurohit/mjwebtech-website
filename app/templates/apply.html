@@ -132,7 +132,7 @@
                   <i class="bi bi-send me-2"></i>Submit Application
                 </button>
                 <p class="text-center text-muted small mt-3">
-                  By submitting you agree to our privacy policy. Your data is used only for recruitment purposes.
+                  By submitting you agree to our <a href="{{ url_for('main.privacy') }}">privacy policy</a>. Your data is used only for recruitment purposes.
                 </p>
               </div>
             </div>
@@ -238,6 +238,8 @@ let otpTimerInterval = null;
     .then(data => {
       if (data.success) {
         emailVerified = true;
+        const tokenInput = document.querySelector('#applyForm [name="verification_token"]');
+        if (tokenInput) tokenInput.value = data.verification_token || '';
         otpSection.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>Email verified! You can now submit your application.</div>';
         submitBtn.disabled = false;
         emailInput.readOnly = true;
