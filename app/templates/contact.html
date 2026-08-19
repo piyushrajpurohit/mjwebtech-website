@@ -128,13 +128,13 @@
                 {{ form.message.label(class="form-label") }}<span class="text-danger ms-1">*</span>
                 {{ form.message(class="form-control mj-input" + (" is-invalid" if form.message.errors else ""), rows=5, placeholder="Tell us about your project or requirement…") }}
                 {% for err in form.message.errors %}<div class="invalid-feedback">{{ err }}</div>{% endfor %}
-                <div class="form-text text-muted">Minimum 10 characters. Be as detailed as possible.</div>
+                <div class="form-text">Minimum 10 characters. Be as detailed as possible.</div>
               </div>
               <!-- Privacy -->
               <div class="col-12">
                 <div class="form-check">
                   {{ form.privacy(class="form-check-input" + (" is-invalid" if form.privacy.errors else ""), id="privacyCheck") }}
-                  <label class="form-check-label small text-muted" for="privacyCheck">
+                  <label class="form-check-label" for="privacyCheck">
                     I agree to MJ WebTech's privacy policy and consent to being contacted regarding my enquiry.
                   </label>
                   {% for err in form.privacy.errors %}<div class="invalid-feedback d-block">{{ err }}</div>{% endfor %}

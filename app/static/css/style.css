@@ -336,9 +336,14 @@ img{max-width:100%}
 .mj-input:focus{border-color:var(--mj-accent)!important;box-shadow:0 0 0 3px rgba(99,102,241,.12)!important;outline:none!important;background:var(--mj-dark-4)!important}
 .mj-input.is-invalid{border-color:var(--mj-danger)!important;background:rgba(239,68,68,.05)!important}
 .form-label{font-size:.85rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px}
-.form-text{font-size:.75rem}
+.form-text{font-size:.8rem;color:#CBD5E1;margin-top:6px}
+.contact-form-card .form-text,
+.contact-form-card .form-text.text-muted{color:#CBD5E1 !important}
+.contact-form-card .form-check-label,
+.contact-form-card .form-check-label.text-muted{color:#E2E8F0 !important;font-size:.9rem;line-height:1.5}
 .invalid-feedback{font-size:.8rem;color:#F87171;margin-top:4px}
-.form-check-input{background-color:var(--mj-dark-3);border-color:rgba(99,102,241,.3);width:1.1em;height:1.1em}
+.form-check{display:flex;align-items:flex-start;gap:10px}
+.form-check-input{background-color:var(--mj-dark-4);border:1.5px solid #94A3B8;width:1.15em;height:1.15em;margin-top:.2em;flex-shrink:0}
 .form-check-input:checked{background-color:var(--mj-accent);border-color:var(--mj-accent)}
 .form-check-input.is-invalid{border-color:var(--mj-danger)}
 .form-select option{background:var(--mj-dark-3);color:var(--text-primary)}
