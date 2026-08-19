@@ -146,3 +146,25 @@ def test_resume_is_not_public(client, app):
 
     unauthenticated = client.get(f"/admin/applications/{application_id}/resume")
     assert unauthenticated.status_code in (302, 401)
+
+
+def test_dashboard_shows_account_home(client, app):
+    assert client.get("/dashboard").status_code == 302
+
+    with app.app_context():
+        user = User(name="Priya Sharma", email="priya@example.com")
+        user.set_password("password123")
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
+
+    with client.session_transaction() as sess:
+        sess["user_id"] = user_id
+
+    response = client.get("/dashboard")
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Priya" in html
+    assert "priya@example.com" in html
+    assert "/api/profile" not in html
+    assert "Your applications" in html

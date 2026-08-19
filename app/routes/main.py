@@ -2,8 +2,9 @@
 routes/main.py — Public pages: Home, About, Services.
 """
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, session
 from app.auth_utils import login_required
+from app.models import JobApplication, User
 
 main_bp = Blueprint("main", __name__)
 
@@ -148,4 +149,15 @@ def privacy():
 @main_bp.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html")
+    user = User.query.get(session["user_id"])
+    applications = (
+        JobApplication.query.filter_by(email=user.email)
+        .order_by(JobApplication.created_at.desc())
+        .limit(10)
+        .all()
+    )
+    return render_template(
+        "dashboard.html",
+        user=user,
+        applications=applications,
+    )
