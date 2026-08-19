@@ -73,7 +73,18 @@ window.mjApiUrl = function (path) {
         e.preventDefault();
         scrollToTarget(target);
         const nav = document.getElementById('navMenu');
-        if (nav?.classList.contains('show')) bootstrap.Collapse.getOrCreateInstance(nav).hide();
+        if (nav?.classList.contains('show') && typeof bootstrap !== 'undefined') {
+          bootstrap.Collapse.getOrCreateInstance(nav).hide();
+        }
+      }
+    });
+  });
+
+  document.querySelectorAll('#navMenu .nav-link, #navMenu .btn').forEach(link => {
+    link.addEventListener('click', () => {
+      const nav = document.getElementById('navMenu');
+      if (nav?.classList.contains('show') && typeof bootstrap !== 'undefined') {
+        bootstrap.Collapse.getOrCreateInstance(nav).hide();
       }
     });
   });
