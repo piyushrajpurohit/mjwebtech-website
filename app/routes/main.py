@@ -20,7 +20,7 @@ def index():
     return render_template("index.html", testimonials=testimonials)
 
 
-@main_bp.route("/about")
+@main_bp.route("")
 def about():
     team = [
         {"name": "Mahima Kumari", "role": "Founder & CEO", "photo": "images/leadership/mahima-kumari.png"},
