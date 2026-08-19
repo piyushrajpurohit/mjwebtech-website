@@ -219,6 +219,7 @@ img{max-width:100%}
 .page-hero-sm{padding:80px 0 48px}
 .page-hero-title{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;margin:12px 0}
 .page-hero-sub{font-size:1.05rem;color:var(--text-secondary);max-width:560px;margin:0 auto}
+.page-hero .container:not(.text-center) .page-hero-sub{margin-left:0;margin-right:0}
 
 /* ── ABOUT ── */
 .about-visual{position:relative;width:100%;min-height:380px;display:flex;align-items:center;justify-content:center}
