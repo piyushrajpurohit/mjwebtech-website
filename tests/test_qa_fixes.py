@@ -148,6 +148,21 @@ def test_resume_is_not_public(client, app):
     assert unauthenticated.status_code in (302, 401)
 
 
+def test_api_ping_is_fast(client):
+    response = client.get("/api/ping")
+    assert response.status_code == 200
+    assert response.get_json()["success"] is True
+
+
+def test_send_otp_does_not_wait_for_email(client):
+    with patch("app.routes.auth.dispatch_otp_email", return_value=True) as queued:
+        response = client.post("/api/auth/send-otp", json={"email": "otp@example.com"})
+    assert response.status_code == 200
+    assert response.get_json()["success"] is True
+    assert "otp" not in response.get_json()
+    queued.assert_called_once()
+
+
 def test_dashboard_shows_account_home(client, app):
     assert client.get("/dashboard").status_code == 302
 

@@ -9,7 +9,7 @@ from flask import (Blueprint, render_template, request,
 from app import csrf, db, limiter
 from app.models import Contact, ContactActionLog, OTPVerification
 from app.forms  import ContactForm
-from app.email_service import otp_send_response, send_email, send_otp_email, send_confirmation_email
+from app.email_service import otp_send_response, send_email, send_confirmation_email, dispatch_otp_email
 from app.security import email_otp_verified, json_payload, mark_email_verified
 
 contact_bp = Blueprint("contact", __name__)
@@ -97,7 +97,7 @@ def send_contact_otp():
     
     try:
         otp_record = OTPVerification.create_otp(email, purpose="contact_verification")
-        success = send_otp_email(email, otp_record.plain_otp, purpose="contact form verification")
+        success = dispatch_otp_email(email, otp_record.plain_otp, purpose="contact form verification")
         return otp_send_response(success, otp_record.plain_otp)
             
     except Exception as e:

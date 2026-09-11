@@ -11,7 +11,7 @@ from app import csrf, db, limiter
 from app.auth_utils import login_required
 from app.models import JobApplication, OTPVerification
 from app.forms  import CareerForm
-from app.email_service import otp_send_response, send_otp_email, send_confirmation_email
+from app.email_service import otp_send_response, send_confirmation_email, dispatch_otp_email
 from app.security import email_otp_verified, json_payload, mark_email_verified, save_resume
 
 careers_bp = Blueprint("careers", __name__)
@@ -105,7 +105,7 @@ def send_application_otp():
     
     try:
         otp_record = OTPVerification.create_otp(email, purpose="job_application")
-        success = send_otp_email(email, otp_record.plain_otp, purpose="job application verification")
+        success = dispatch_otp_email(email, otp_record.plain_otp, purpose="job application verification")
         return otp_send_response(success, otp_record.plain_otp)
             
     except Exception as e:

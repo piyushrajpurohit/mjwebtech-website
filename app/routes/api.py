@@ -37,6 +37,13 @@ def _establish_session(user: User) -> None:
     session["user_id"] = user.id
 
 
+@api_bp.route("/ping", methods=["GET"])
+@csrf.exempt
+def ping():
+    """Cheap liveness probe used to warm a cold Render instance. No database."""
+    return jsonify({"success": True, "message": "ok"}), 200
+
+
 @api_bp.route("/health", methods=["GET"])
 @csrf.exempt
 def health():

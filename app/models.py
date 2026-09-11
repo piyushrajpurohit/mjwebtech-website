@@ -6,6 +6,8 @@ Structured so SQLite (dev) and MySQL (production) both work transparently.
 
 from datetime import datetime, timedelta
 from hmac import compare_digest
+import hashlib
+import hmac
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 
@@ -164,11 +166,20 @@ class OTPVerification(db.Model):
         return not self.is_used and datetime.utcnow() < self.expires_at
 
     @staticmethod
+    def _hash_otp(plaintext: str) -> str:
+        """HMAC-SHA256 is fast enough for a 10-minute OTP; pbkdf2 blocked the send request."""
+        from flask import current_app
+        secret = str(current_app.config.get("SECRET_KEY") or "otp").encode("utf-8")
+        return hmac.new(secret, plaintext.encode("utf-8"), hashlib.sha256).hexdigest()
+
+    @staticmethod
     def _otp_matches(stored: str, provided: str) -> bool:
         if not stored or not provided:
             return False
         if stored.startswith(("pbkdf2:", "scrypt:", "argon2:")):
             return check_password_hash(stored, provided)
+        if len(stored) == 64:
+            return compare_digest(stored, OTPVerification._hash_otp(provided))
         return compare_digest(stored, provided)
 
     @staticmethod
@@ -186,7 +197,7 @@ class OTPVerification(db.Model):
         expires_at = datetime.utcnow() + timedelta(minutes=expiry_minutes)
         otp_record = OTPVerification(
             email=email,
-            otp=generate_password_hash(plaintext),
+            otp=OTPVerification._hash_otp(plaintext),
             purpose=purpose,
             expires_at=expires_at,
         )

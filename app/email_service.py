@@ -8,6 +8,7 @@ import secrets
 import smtplib
 import socket
 import string
+import threading
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta
@@ -134,7 +135,7 @@ def _send_via_brevo_api(
         },
         method="POST",
     )
-    timeout = current_app.config.get("MAIL_TIMEOUT", 8)
+    timeout = int(current_app.config.get("MAIL_TIMEOUT", 5))
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             status = getattr(response, "status", 200)
@@ -165,7 +166,7 @@ def _send_via_smtp(
     port = int(current_app.config.get("MAIL_PORT", 587))
     use_tls = current_app.config.get("MAIL_USE_TLS", True)
     use_ssl = current_app.config.get("MAIL_USE_SSL", False)
-    timeout = int(current_app.config.get("MAIL_TIMEOUT", 8))
+    timeout = int(current_app.config.get("MAIL_TIMEOUT", 5))
 
     message = MIMEMultipart("alternative")
     message["Subject"] = subject
@@ -206,6 +207,36 @@ def _send_via_smtp(
                 smtp.quit()
             except Exception:
                 pass
+
+
+def mail_is_configured() -> bool:
+    """True when a Brevo API key or SMTP credentials are present."""
+    if _brevo_api_key():
+        return True
+    username = (current_app.config.get("MAIL_USERNAME") or "").strip()
+    password = (current_app.config.get("MAIL_PASSWORD") or "").strip()
+    return bool(username and password)
+
+
+def dispatch_otp_email(email: str, otp: str, purpose: str = "verification") -> bool:
+    """Start OTP delivery in a background thread so the HTTP request can return immediately."""
+    if not mail_is_configured():
+        if _local_otp_fallback_allowed():
+            return False
+        current_app.logger.error("OTP email skipped: mail is not configured")
+        return False
+
+    app = current_app._get_current_object()
+
+    def _send():
+        with app.app_context():
+            try:
+                send_otp_email(email, otp, purpose)
+            except Exception:
+                app.logger.exception("Background OTP email failed for %s", email)
+
+    threading.Thread(target=_send, name="otp-email", daemon=True).start()
+    return True
 
 
 def _local_otp_fallback_allowed() -> bool:

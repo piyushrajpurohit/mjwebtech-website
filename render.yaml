@@ -58,7 +58,7 @@ services:
       - key: MAIL_USE_SSL
         value: "false"
       - key: MAIL_TIMEOUT
-        value: "8"
+        value: "5"
       - key: MAIL_USERNAME
         sync: false
       - key: MAIL_PASSWORD

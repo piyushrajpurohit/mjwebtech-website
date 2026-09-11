@@ -10,8 +10,24 @@ window.mjApiUrl = function (path) {
   if (path.charAt(0) !== '/') {
     path = '/' + path;
   }
+  // Same-origin /api/* is proxied by Netlify and skips a CORS preflight
+  // to a possibly cold Render instance.
+  var host = window.location.hostname;
+  if (
+    host === 'mjwebtech.in' ||
+    host === 'www.mjwebtech.in' ||
+    host.endsWith('.netlify.app')
+  ) {
+    return path;
+  }
   return base + path;
 };
+
+(function () {
+  try {
+    fetch(window.mjApiUrl('/api/ping'), { method: 'GET', cache: 'no-store', credentials: 'omit' }).catch(function () {});
+  } catch (e) {}
+})();
 
 (function () {
 

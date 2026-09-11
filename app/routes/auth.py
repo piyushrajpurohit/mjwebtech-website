@@ -9,7 +9,7 @@ from flask import (Blueprint, render_template, request,
                    redirect, url_for, flash, current_app, jsonify, session)
 from app import db, limiter
 from app.models import OTPVerification, User
-from app.email_service import otp_send_response, send_otp_email, send_confirmation_email
+from app.email_service import otp_send_response, send_confirmation_email, dispatch_otp_email
 from app.security import MIN_PASSWORD_LENGTH, email_otp_verified, json_payload, mark_email_verified
 
 auth_bp = Blueprint("auth", __name__)
@@ -138,7 +138,7 @@ def send_register_otp():
     
     try:
         otp_record = OTPVerification.create_otp(email, purpose="registration")
-        success = send_otp_email(email, otp_record.plain_otp, purpose="account registration")
+        success = dispatch_otp_email(email, otp_record.plain_otp, purpose="account registration")
         return otp_send_response(success, otp_record.plain_otp)
             
     except Exception as e:
@@ -190,7 +190,7 @@ def resend_register_otp():
     
     try:
         otp_record = OTPVerification.create_otp(email, purpose="registration")
-        success = send_otp_email(email, otp_record.plain_otp, purpose="account registration")
+        success = dispatch_otp_email(email, otp_record.plain_otp, purpose="account registration")
         return otp_send_response(success, otp_record.plain_otp, resent=True)
             
     except Exception as e:
