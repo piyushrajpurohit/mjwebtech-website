@@ -380,7 +380,7 @@ def send_confirmation_email(
     """
     company_name = current_app.config.get("COMPANY_NAME", "MJ WebTech Pvt. Ltd.")
     company_website = current_app.config.get("COMPANY_WEBSITE", "https://mjwebtech.in")
-    company_phone = current_app.config.get("COMPANY_PHONE", "+91-98765-43210")
+    company_phone = current_app.config.get("COMPANY_PHONE", "+91-9155551456")
     
     subject = f"[{company_name}] {subject_line}"
     

@@ -148,7 +148,7 @@ class Config:
     # ── Company Information ──
     COMPANY_NAME    = "MJ WebTech Pvt. Ltd."
     COMPANY_EMAIL   = "info@mjwebtech.in"
-    COMPANY_PHONE   = os.environ.get("COMPANY_PHONE", "+91-98765-43210")
+    COMPANY_PHONE   = os.environ.get("COMPANY_PHONE", "+91-9199551456")
     COMPANY_ADDRESS = "109, Adarsh Nagar, Near Bajaj Agency, Mahadeva Road, Siwan, Bihar - 841227"
     SOCIAL_LINKEDIN = os.environ.get("SOCIAL_LINKEDIN", "").strip()
     SOCIAL_TWITTER = os.environ.get("SOCIAL_TWITTER", "").strip()
